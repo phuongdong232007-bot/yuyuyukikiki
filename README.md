@@ -1,21 +1,25 @@
-# BEESO BUDGET
-
-Sổ chi tiêu cute cho sinh viên (HTML / CSS / JS).
+# BEESO BUDGET + Matcha Flashcards
 
 ## Cách chạy
 
-**Chỉ cần mở file `index.html`** trong trình duyệt (Chrome / Edge / Firefox).
-
-## File trên repo (đã lọc)
+Mở file trong trình duyệt (Chrome / Edge / Firefox):
 
 | File | Ý nghĩa |
 |------|---------|
-| `index.html` | **Mở file này** — toàn bộ web app |
-| `README.md` | Hướng dẫn đọc |
+| `index.html` | BEESO BUDGET — sổ chi tiêu |
+| `korean-flashcards.html` | **Matcha Flashcards** — memory game Việt ↔ Hàn |
 
-Không cần mở file nào khác.
+## Matcha Nối Từ
 
-## Tính năng
+- **Nối từ** Việt ↔ Hàn (2 cột, 15 cặp mỗi bài)
+- **Học lật thẻ** riêng để ôn từ vựng
+- 12 chủ đề sơ cấp → trung cấp
+- Nút **Bắt đầu nối từ** mới chơi được
+- Đúng → biến mất + Matcha yoooo / Cuteee; sai → Tteng! + sổ tay
+- Đồng hồ đếm ngược **2 phút** mỗi bài
+- Màu matcha pastel
+
+## BEESO BUDGET
 
 - Trang giới thiệu + sổ chi tiêu
 - Tự gắn category, tính số dư ngày/tuần/tháng

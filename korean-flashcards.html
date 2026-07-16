@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matcha Nối Từ · Việt ↔ Hàn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="korean-flashcards.css" />
+</head>
+<body>
+  <div class="bg-deco" aria-hidden="true">
+    <span class="leaf leaf-1">🍃</span>
+    <span class="leaf leaf-2">🍵</span>
+    <span class="leaf leaf-3">🌿</span>
+    <span class="leaf leaf-4">🍃</span>
+  </div>
+
+  <div class="fx-layer">
+    <div id="fx-popup" class="fx-popup"></div>
+  </div>
+
+  <div class="app">
+    <header class="header">
+      <div class="logo" aria-hidden="true">🍵</div>
+      <h1 class="title">Matcha <span>Nối Từ</span></h1>
+      <p class="subtitle">Nối cặp Việt ↔ Hàn · Học bằng lật thẻ · Pastel matcha</p>
+    </header>
+
+    <!-- Menu -->
+    <div id="view-menu" class="view active">
+      <section class="panel">
+        <div class="section-head">
+          <span class="section-icon">📖</span>
+          <h2>Chọn chủ đề từ vựng</h2>
+          <span class="section-line"></span>
+        </div>
+        <p class="start-hint">12 chủ đề · Sơ cấp → Trung cấp · Mỗi bài 15 từ</p>
+        <div id="topic-grid" class="topic-grid"></div>
+        <p id="selected-topic-label" class="selected-topic-label">Chọn một chủ đề trước nhé</p>
+        <div class="controls">
+          <button type="button" id="btn-study" class="btn btn-secondary" disabled>📚 Học lật thẻ</button>
+          <button type="button" id="btn-start" class="btn btn-primary" disabled>🎮 Bắt đầu nối từ</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <span class="section-icon">📓</span>
+          <h2>Sổ tay — từ nối sai</h2>
+          <span class="section-line"></span>
+        </div>
+        <p class="start-hint">Nối sai? Từ sẽ được ghi vào đây để ôn lại~</p>
+        <ul id="notebook-list" class="notebook-list"></ul>
+        <p id="notebook-empty" class="notebook-empty">Chưa có từ nào — chơi thử đi nào! 🍵</p>
+        <p id="notebook-meta" class="notebook-meta"></p>
+        <div class="controls">
+          <button type="button" id="btn-clear-notebook" class="btn btn-secondary">🗑 Xóa sổ tay</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Game: nối từ -->
+    <div id="view-game" class="view">
+      <section class="panel">
+        <div class="game-hud">
+          <span id="game-topic-label" class="hud-stat">Chủ đề</span>
+          <span id="hud-moves" class="hud-stat">Lượt: 0</span>
+          <span id="hud-matched" class="hud-stat">Đúng: 0/15</span>
+          <span id="hud-timer" class="hud-stat timer">02:00</span>
+        </div>
+
+        <div class="controls" style="margin-bottom: 1rem;">
+          <button type="button" id="btn-timer" class="btn btn-timer">⏱ Bắt đầu đếm giờ (2 phút)</button>
+          <button type="button" id="btn-back-menu" class="btn btn-secondary">← Về menu</button>
+        </div>
+
+        <p class="play-hint">Chọn 1 từ tiếng Việt rồi chọn 1 từ tiếng Hàn để nối cặp</p>
+
+        <div class="match-board">
+          <div class="match-col">
+            <h3 class="col-title">🇻🇳 Tiếng Việt</h3>
+            <div id="col-vi" class="word-list"></div>
+          </div>
+          <div class="match-mid" aria-hidden="true">↔</div>
+          <div class="match-col">
+            <h3 class="col-title">🇰🇷 Tiếng Hàn</h3>
+            <div id="col-ko" class="word-list"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Study: lật thẻ -->
+    <div id="view-study" class="view">
+      <section class="panel">
+        <div class="game-hud">
+          <span id="study-topic-label" class="hud-stat">Chủ đề</span>
+          <span id="study-progress" class="hud-stat">1 / 15</span>
+        </div>
+
+        <div class="study-stage">
+          <button type="button" id="study-card" class="study-card" aria-label="Lật thẻ">
+            <div class="study-inner">
+              <div class="study-face study-front">
+                <span class="study-lang">VI</span>
+                <p id="study-front-text" class="study-text"></p>
+                <span class="study-tip">Chạm để lật</span>
+              </div>
+              <div class="study-face study-back">
+                <span class="study-lang">KO</span>
+                <p id="study-back-text" class="study-text"></p>
+                <span class="study-tip">Chạm để úp lại</span>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        <div class="controls">
+          <button type="button" id="btn-study-prev" class="btn btn-secondary">← Trước</button>
+          <button type="button" id="btn-study-next" class="btn btn-primary">Sau →</button>
+        </div>
+        <div class="controls">
+          <button type="button" id="btn-study-to-game" class="btn btn-primary">🎮 Chơi nối từ</button>
+          <button type="button" id="btn-study-back" class="btn btn-secondary">← Về menu</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="win-modal" class="modal-overlay">
+    <div class="modal">
+      <h3 id="modal-title">🍵 Matcha Victory!</h3>
+      <p id="modal-body">Bạn nối đúng tất cả!</p>
+      <div class="controls">
+        <button type="button" id="btn-play-again" class="btn btn-primary">Chơi lại</button>
+        <button type="button" id="btn-modal-menu" class="btn btn-secondary">Về menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="korean-flashcards.js"></script>
+</body>
+</html>
