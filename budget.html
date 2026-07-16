@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="doc.title.app">BEESO BUDGET · Sổ chi tiêu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="page-app">
+  <div class="bg-deco" aria-hidden="true">
+    <span class="blob blob-a"></span>
+    <span class="blob blob-b"></span>
+    <span class="blob blob-c"></span>
+    <span class="honeycomb"></span>
+  </div>
+
+  <div class="app-shell">
+    <header class="app-top">
+      <div class="app-top-row">
+        <a class="back-home" href="index.html" data-i18n="app.back" data-i18n-title="app.back">← Giới thiệu</a>
+        <div class="lang-toggle" role="group" data-i18n-aria="lang.aria" aria-label="Đổi ngôn ngữ Việt / Hàn">
+          <button type="button" class="lang-btn active" data-lang="vi">VI</button>
+          <button type="button" class="lang-btn" data-lang="ko">KO</button>
+        </div>
+      </div>
+      <div class="app-brand">
+        <div class="logo-mark sm" aria-hidden="true">🐝</div>
+        <div>
+          <h1 class="brand-title sm">BEESO <span>BUDGET</span></h1>
+          <p class="app-sub" data-i18n="app.sub">Nhập thu nhập → Tự gắn category &amp; tính toán</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="section-head">
+        <span class="section-icon">💛</span>
+        <h2 data-i18n="sec.balance">Số dư theo kỳ</h2>
+        <span class="section-line"></span>
+      </div>
+
+      <div class="period-tabs" role="tablist">
+        <button type="button" class="period-btn active" data-period="day" data-i18n="period.day">Ngày</button>
+        <button type="button" class="period-btn" data-period="week" data-i18n="period.week">Tuần</button>
+        <button type="button" class="period-btn" data-period="month" data-i18n="period.month">Tháng</button>
+      </div>
+
+      <div class="balance-grid">
+        <article class="stat-pill income">
+          <p class="stat-label" data-i18n="stat.income">Tổng thu</p>
+          <p class="stat-value" id="totalIncome">0 ₫</p>
+        </article>
+        <article class="stat-pill expense">
+          <p class="stat-label" data-i18n="stat.expense">Tổng chi</p>
+          <p class="stat-value" id="totalExpense">0 ₫</p>
+        </article>
+        <article class="stat-pill balance">
+          <p class="stat-label" data-i18n="stat.balance">Số dư</p>
+          <p class="stat-value" id="balanceValue">0 ₫</p>
+          <p class="stat-formula" data-i18n="stat.formula">= Thu − Chi</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <span class="section-icon">✨</span>
+        <h2 data-i18n="sec.enter">Nhập giao dịch</h2>
+        <span class="section-line"></span>
+      </div>
+      <p class="section-hint" data-i18n="sec.enter.hint">Gõ mô tả → BEESO tự gắn category: salary · food · transport · shopping · study · others</p>
+
+      <form id="txForm" class="tx-form" autocomplete="off">
+        <div class="form-row">
+          <label class="field">
+            <span data-i18n="field.type">Loại</span>
+            <select id="txType" required>
+              <option value="income" data-i18n="opt.income">Thu nhập (Income)</option>
+              <option value="expense" selected data-i18n="opt.expense">Chi tiêu (Expense)</option>
+            </select>
+          </label>
+          <label class="field">
+            <span data-i18n="field.amount">Số tiền (₫)</span>
+            <input id="txAmount" type="number" min="1" step="1000" data-i18n-placeholder="ph.amount" placeholder="vd: 50000" required />
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label class="field grow">
+            <span data-i18n="field.note">Mô tả</span>
+            <input id="txNote" type="text" data-i18n-placeholder="ph.note" placeholder="vd: ăn phở, grab đi học, lương part-time..." required />
+          </label>
+          <label class="field">
+            <span data-i18n="field.date">Ngày</span>
+            <input id="txDate" type="date" required />
+          </label>
+        </div>
+
+        <div class="auto-tag" id="autoTagPreview">
+          <span class="auto-tag-label" data-i18n="predict.label">Category dự đoán:</span>
+          <span class="cat-chip others" id="predictedCat">others</span>
+        </div>
+
+        <button type="submit" class="primary-btn" data-i18n="btn.add">Thêm &amp; tự tính toán</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <span class="section-icon">💡</span>
+        <h2 data-i18n="sec.advice">Lời khuyên tiêu dùng</h2>
+        <span class="section-line"></span>
+      </div>
+      <p class="section-hint" data-i18n="sec.advice.hint">Gợi ý dựa trên chi tiêu thực tế trong kỳ đang chọn</p>
+      <div class="advice-list" id="adviceList"></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <span class="section-icon">📊</span>
+        <h2 data-i18n="sec.chart">Chi tiêu theo category</h2>
+        <span class="section-line"></span>
+      </div>
+      <p class="section-hint" data-i18n="sec.chart.hint">Biểu đồ chi tiêu theo category trong kỳ đang chọn</p>
+
+      <div class="chart-wrap">
+        <canvas id="spendChart" width="280" height="280" aria-label="Spending by category"></canvas>
+        <ul class="chart-legend" id="chartLegend"></ul>
+      </div>
+      <p class="empty-chart" id="chartEmpty" data-i18n="chart.empty">Chưa có chi tiêu trong kỳ này — thêm giao dịch để xem chart nhé!</p>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <span class="section-icon">📝</span>
+        <h2 data-i18n="sec.list">Danh sách giao dịch</h2>
+        <span class="section-line"></span>
+      </div>
+      <ul class="tx-list" id="txList"></ul>
+      <p class="empty-list" id="listEmpty" data-i18n="list.empty">Chưa có giao dịch nào. Hãy nhập thu nhập hoặc chi tiêu ở trên!</p>
+    </section>
+
+    <footer class="app-foot" data-i18n="app.foot">
+      BEESO BUDGET · Sinh viên tiếng Hàn Truyền thông · 02/03/2007
+    </footer>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script src="budget.js"></script>
+</body>
+</html>
