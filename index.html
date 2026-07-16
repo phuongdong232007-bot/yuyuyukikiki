@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beeso Weather</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --sky-top: #9fd8ff;
+      --sky-mid: #c9ebff;
+      --sky-bottom: #eef8ff;
+      --card: rgba(255, 255, 255, 0.82);
+      --ink: #1a3a5c;
+      --ink-soft: #4a6d8c;
+      --accent: #3aa0e8;
+      --accent-deep: #1f7fc4;
+      --honey: #ffc94a;
+      --honey-soft: #fff3c9;
+      --soft-shadow: 0 18px 40px rgba(61, 140, 200, 0.18);
+      --radius: 28px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; }
+
+    body {
+      font-family: "Nunito", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 18%, rgba(255, 201, 74, 0.22), transparent 28%),
+        radial-gradient(circle at 88% 12%, rgba(90, 180, 255, 0.28), transparent 30%),
+        linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 45%, var(--sky-bottom) 100%);
+      overflow-x: hidden;
+    }
+
+    .sky {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .weather-stage { position: absolute; inset: 0; }
+
+    .deco-bubbles span {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.35);
+      animation: floaty 8s ease-in-out infinite;
+    }
+    .deco-bubbles span:nth-child(1) { width: 70px; height: 70px; left: 8%; top: 22%; }
+    .deco-bubbles span:nth-child(2) { width: 42px; height: 42px; left: 78%; top: 36%; animation-delay: -2s; }
+    .deco-bubbles span:nth-child(3) { width: 56px; height: 56px; left: 62%; top: 72%; animation-delay: -4s; }
+    .deco-bubbles span:nth-child(4) { width: 28px; height: 28px; left: 18%; top: 78%; animation-delay: -1s; }
+
+    @keyframes floaty {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-14px); }
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: min(600px, calc(100% - 2rem));
+      margin: 2.2rem auto 3rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.95rem;
+      margin-bottom: 1.35rem;
+    }
+
+    .logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 22px;
+      display: grid;
+      place-items: center;
+      font-size: 1.85rem;
+      background:
+        radial-gradient(circle at 30% 30%, #fff8d8, transparent 45%),
+        linear-gradient(145deg, #ffffff, #ccecff);
+      box-shadow: var(--soft-shadow);
+      position: relative;
+      animation: buzz 3.5s ease-in-out infinite;
+    }
+
+    .logo::after {
+      content: "";
+      position: absolute;
+      inset: -3px;
+      border-radius: 24px;
+      border: 2px dashed rgba(255, 201, 74, 0.55);
+      pointer-events: none;
+    }
+
+    @keyframes buzz {
+      0%, 100% { transform: rotate(-2deg); }
+      50% { transform: rotate(2deg); }
+    }
+
+    .brand h1 {
+      font-family: "Quicksand", sans-serif;
+      font-size: 2.05rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #1769a8;
+    }
+
+    .brand h1 span {
+      color: #e6a800;
+    }
+
+    .tagline { color: var(--ink-soft); font-size: 0.95rem; }
+
+    .search-panel { margin-bottom: 0.9rem; }
+
+    .search-form {
+      display: flex;
+      gap: 0.6rem;
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 999px;
+      padding: 0.45rem 0.45rem 0.45rem 1.1rem;
+      box-shadow: var(--soft-shadow);
+    }
+
+    .search-form input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font: inherit;
+      font-size: 1rem;
+      color: var(--ink);
+      min-width: 0;
+    }
+
+    .search-form input::placeholder { color: #7a9bb8; }
+
+    .search-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 0.75rem 1.25rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+      color: white;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(31, 127, 196, 0.35);
+    }
+
+    .search-btn:hover { transform: translateY(-1px); }
+
+    .hint {
+      margin-top: 0.55rem;
+      padding-left: 0.8rem;
+      color: var(--ink-soft);
+      font-size: 0.85rem;
+    }
+
+    .api-panel { margin-bottom: 1rem; }
+
+    .api-panel details {
+      background: rgba(255, 255, 255, 0.55);
+      border-radius: 18px;
+      padding: 0.7rem 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+    }
+
+    .api-panel summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: #2b6fa8;
+    }
+
+    .api-box { margin-top: 0.75rem; display: grid; gap: 0.55rem; }
+    .api-box p { font-size: 0.9rem; color: var(--ink-soft); line-height: 1.45; }
+    .api-box a { color: var(--accent-deep); }
+    .api-box input {
+      width: 100%;
+      border: 1px solid #b7d8f2;
+      border-radius: 14px;
+      padding: 0.7rem 0.9rem;
+      font: inherit;
+      background: white;
+      color: var(--ink);
+    }
+
+    .save-btn {
+      justify-self: start;
+      border: none;
+      border-radius: 12px;
+      padding: 0.55rem 1rem;
+      background: var(--honey-soft);
+      color: #8a6500;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .api-note { font-size: 0.85rem !important; }
+
+    .status {
+      min-height: 1.4rem;
+      margin-bottom: 0.8rem;
+      color: #2b6fa8;
+      font-weight: 600;
+    }
+
+    .status.error { color: #c4475a; }
+
+    .weather-card {
+      background: var(--card);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      border-radius: var(--radius);
+      padding: 1.4rem;
+      box-shadow: var(--soft-shadow);
+      animation: rise-in 0.45s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .weather-card::before {
+      content: "";
+      position: absolute;
+      top: -40px;
+      right: -30px;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 201, 74, 0.28), transparent 70%);
+      pointer-events: none;
+    }
+
+    .weather-card.hidden { display: none; }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: flex-start;
+      position: relative;
+    }
+
+    .place h2 {
+      font-family: "Quicksand", sans-serif;
+      font-size: 1.55rem;
+      color: #145f96;
+    }
+
+    .place p {
+      margin-top: 0.25rem;
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+    }
+
+    .lang-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 0.45rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      background: rgba(255, 243, 201, 0.9);
+      color: #8a6500;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .temp-block { text-align: right; }
+
+    .temp {
+      font-size: 3.2rem;
+      font-weight: 800;
+      line-height: 1;
+      color: #0f5f9a;
+      letter-spacing: -0.03em;
+    }
+
+    .desc {
+      margin-top: 0.35rem;
+      text-transform: capitalize;
+      color: var(--ink-soft);
+      font-weight: 700;
+    }
+
+    .effect-preview {
+      position: relative;
+      height: 120px;
+      margin: 1.1rem 0 1.2rem;
+      border-radius: 22px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #9fd6ff 0%, #e8f7ff 100%);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.85rem 0.9rem;
+      border-radius: 18px;
+      background: rgba(232, 245, 255, 0.85);
+    }
+
+    .stat-icon { font-size: 1.25rem; }
+    .stat-label { font-size: 0.78rem; color: var(--ink-soft); font-weight: 700; }
+    .stat-value { font-size: 1.05rem; font-weight: 800; color: #145f96; }
+
+    .tips {
+      margin-top: 1.15rem;
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .tips-title {
+      font-family: "Quicksand", sans-serif;
+      font-size: 1.15rem;
+      color: #145f96;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .tip {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.75rem;
+      padding: 0.95rem 1rem;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(232, 245, 255, 0.9));
+      border: 1px solid rgba(180, 220, 245, 0.7);
+      animation: rise-in 0.5s ease;
+    }
+
+    .tip.wish {
+      background: linear-gradient(135deg, rgba(255, 248, 220, 0.95), rgba(255, 255, 255, 0.92));
+      border-color: rgba(255, 210, 110, 0.55);
+    }
+
+    .tip-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      font-size: 1.25rem;
+      background: #e8f5ff;
+    }
+
+    .tip.wish .tip-icon { background: var(--honey-soft); }
+
+    .tip h3 {
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .tip p {
+      margin-top: 0.2rem;
+      font-size: 0.98rem;
+      line-height: 1.45;
+      font-weight: 700;
+      color: #145f96;
+    }
+
+    .footer-note {
+      margin-top: 1.2rem;
+      text-align: center;
+      color: var(--ink-soft);
+      font-size: 0.82rem;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+
+    @keyframes rise-in {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fx-sun, .fx-cloud, .fx-rain, .fx-snow, .fx-thunder, .fx-mist { position: absolute; inset: 0; }
+
+    .sun {
+      position: absolute;
+      top: 18px;
+      right: 28px;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fff7c2, #ffd54a 55%, #ffb300 100%);
+      box-shadow: 0 0 28px rgba(255, 196, 0, 0.65);
+      animation: sun-pulse 2.4s ease-in-out infinite;
+    }
+
+    .sun::before {
+      content: "";
+      position: absolute;
+      inset: -14px;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, transparent 0 12deg, rgba(255, 214, 90, 0.55) 12deg 20deg, transparent 20deg 45deg);
+      animation: sun-spin 12s linear infinite;
+      z-index: -1;
+    }
+
+    @keyframes sun-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+    @keyframes sun-spin { to { transform: rotate(360deg); } }
+
+    .cloud {
+      position: absolute;
+      background: #fff;
+      border-radius: 40px;
+      opacity: 0.92;
+      filter: drop-shadow(0 6px 10px rgba(80, 130, 170, 0.18));
+      animation: cloud-drift 12s ease-in-out infinite;
+    }
+    .cloud::before, .cloud::after {
+      content: "";
+      position: absolute;
+      background: #fff;
+      border-radius: 50%;
+    }
+    .cloud.one { width: 78px; height: 28px; top: 34px; left: 18%; }
+    .cloud.one::before { width: 34px; height: 34px; top: -18px; left: 12px; }
+    .cloud.one::after { width: 42px; height: 42px; top: -22px; left: 32px; }
+    .cloud.two {
+      width: 96px; height: 32px; top: 58px; left: 48%;
+      animation-duration: 16s; animation-delay: -3s; opacity: 0.8;
+    }
+    .cloud.two::before { width: 38px; height: 38px; top: -18px; left: 16px; }
+    .cloud.two::after { width: 48px; height: 48px; top: -24px; left: 38px; }
+    @keyframes cloud-drift {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(18px); }
+    }
+
+    .drop, .flake {
+      position: absolute;
+      top: -12px;
+      animation-name: fall;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+    }
+    .drop {
+      width: 2px;
+      height: 14px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, transparent, #5eb7f5);
+    }
+    .flake {
+      color: white;
+      font-size: 0.75rem;
+      text-shadow: 0 0 4px rgba(180, 220, 255, 0.8);
+    }
+    @keyframes fall { to { transform: translateY(140px); } }
+
+    .bolt {
+      position: absolute;
+      top: 18px;
+      left: 42%;
+      width: 8px;
+      height: 36px;
+      background: #fff7a8;
+      clip-path: polygon(35% 0, 70% 0, 45% 42%, 75% 42%, 20% 100%, 35% 52%, 10% 52%);
+      opacity: 0;
+      animation: flash 2.8s ease-in-out infinite;
+      filter: drop-shadow(0 0 8px #ffe566);
+    }
+    @keyframes flash {
+      0%, 86%, 100% { opacity: 0; }
+      88%, 92% { opacity: 1; }
+      90% { opacity: 0.3; }
+    }
+
+    .mist-layer {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 60%, rgba(255, 255, 255, 0.55), transparent 50%),
+        radial-gradient(ellipse at 70% 40%, rgba(255, 255, 255, 0.5), transparent 55%),
+        linear-gradient(180deg, rgba(220, 235, 245, 0.2), rgba(255, 255, 255, 0.55));
+      animation: mist-move 6s ease-in-out infinite;
+    }
+    @keyframes mist-move {
+      0%, 100% { opacity: 0.7; transform: translateX(0); }
+      50% { opacity: 1; transform: translateX(10px); }
+    }
+
+    .weather-stage .bg-sun {
+      position: absolute;
+      top: -40px;
+      right: -30px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 230, 140, 0.55), transparent 68%);
+      animation: sun-pulse 3s ease-in-out infinite;
+    }
+    .weather-stage .bg-rain .drop,
+    .weather-stage .bg-snow .flake {
+      position: absolute;
+      top: -20px;
+      animation-name: fall-full;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+    }
+    @keyframes fall-full { to { transform: translateY(110vh); } }
+    .weather-stage .bg-rain .drop {
+      width: 2px;
+      height: 16px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, transparent, rgba(90, 170, 230, 0.55));
+    }
+    .weather-stage .bg-snow .flake { color: rgba(255, 255, 255, 0.9); font-size: 0.8rem; }
+    .weather-stage .bg-cloud {
+      position: absolute;
+      width: 140px;
+      height: 44px;
+      background: rgba(255, 255, 255, 0.55);
+      border-radius: 40px;
+      filter: blur(1px);
+      animation: cloud-drift 18s ease-in-out infinite;
+    }
+    .weather-stage .bg-cloud::before,
+    .weather-stage .bg-cloud::after {
+      content: "";
+      position: absolute;
+      background: inherit;
+      border-radius: 50%;
+    }
+    .weather-stage .bg-cloud::before { width: 58px; height: 58px; top: -28px; left: 20px; }
+    .weather-stage .bg-cloud::after { width: 72px; height: 72px; top: -36px; left: 52px; }
+    .weather-stage .bg-mist {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.35));
+      animation: mist-move 8s ease-in-out infinite;
+    }
+    .weather-stage .bg-bolt {
+      position: absolute;
+      top: 12%;
+      width: 10px;
+      height: 70px;
+      background: #fff8b8;
+      clip-path: polygon(35% 0, 70% 0, 45% 42%, 75% 42%, 20% 100%, 35% 52%, 10% 52%);
+      opacity: 0;
+      animation: flash 3.2s ease-in-out infinite;
+      filter: drop-shadow(0 0 12px #ffe566);
+    }
+
+    body.theme-clear { --sky-top: #9fd8ff; --sky-mid: #c9ebff; --sky-bottom: #eef8ff; }
+    body.theme-clouds { --sky-top: #a9cfe6; --sky-mid: #c9dde9; --sky-bottom: #e8f2f8; }
+    body.theme-rain { --sky-top: #7eafd0; --sky-mid: #a8c9de; --sky-bottom: #d7e8f3; }
+    body.theme-thunder { --sky-top: #6a8fad; --sky-mid: #8eacbf; --sky-bottom: #c7d8e4; }
+    body.theme-snow { --sky-top: #b7d4ea; --sky-mid: #d6e8f5; --sky-bottom: #f4f9fd; }
+    body.theme-mist { --sky-top: #b6c9d6; --sky-mid: #d0dde6; --sky-bottom: #e9f0f5; }
+
+    @media (max-width: 520px) {
+      .app { margin-top: 1.3rem; }
+      .brand h1 { font-size: 1.7rem; }
+      .temp { font-size: 2.6rem; }
+      .card-top { flex-direction: column; }
+      .temp-block { text-align: left; }
+      .stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sky" aria-hidden="true">
+    <div class="weather-stage" id="weatherStage"></div>
+    <div class="deco-bubbles">
+      <span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <main class="app">
+    <header class="brand">
+      <div class="logo" aria-hidden="true">🐝</div>
+      <div>
+        <h1>Beeso <span>Weather</span></h1>
+        <p class="tagline">Bay theo thời tiết, chuẩn bị thật dễ thương</p>
+      </div>
+    </header>
+
+    <section class="search-panel">
+      <form id="searchForm" class="search-form" autocomplete="off">
+        <label class="sr-only" for="cityInput">Tìm thành phố</label>
+        <input id="cityInput" type="search" placeholder="Nhập tên thành phố... (vd: Hà Nội, Seoul)" required />
+        <button type="submit" class="search-btn"><span>Tìm</span></button>
+      </form>
+      <p class="hint">Gợi ý: Da Nang, Tokyo, London, Seoul, Paris</p>
+    </section>
+
+    <section class="api-panel" id="apiPanel">
+      <details>
+        <summary>Cài đặt API key OpenWeatherMap</summary>
+        <div class="api-box">
+          <p>Lấy key miễn phí tại <a href="https://openweathermap.org/api" target="_blank" rel="noopener">openweathermap.org</a>, rồi dán vào đây:</p>
+          <input id="apiKeyInput" type="password" placeholder="Dán API key của bạn" />
+          <button type="button" id="saveApiKey" class="save-btn">Lưu key</button>
+          <p class="api-note" id="apiNote"></p>
+        </div>
+      </details>
+    </section>
+
+    <section class="status" id="status" role="status" aria-live="polite"></section>
+
+    <section class="weather-card hidden" id="weatherCard">
+      <div class="card-top">
+        <div class="place">
+          <h2 id="cityName">—</h2>
+          <p id="localTime">—</p>
+          <div class="lang-badge" id="langBadge">🌐 —</div>
+        </div>
+        <div class="temp-block">
+          <p class="temp" id="temperature">—°</p>
+          <p class="desc" id="description">—</p>
+        </div>
+      </div>
+
+      <div class="effect-preview" id="effectPreview" aria-hidden="true"></div>
+
+      <div class="stats">
+        <div class="stat"><span class="stat-icon">💧</span><div><p class="stat-label">Độ ẩm</p><p class="stat-value" id="humidity">—</p></div></div>
+        <div class="stat"><span class="stat-icon">🌡️</span><div><p class="stat-label">Cảm giác như</p><p class="stat-value" id="feelsLike">—</p></div></div>
+        <div class="stat"><span class="stat-icon">💨</span><div><p class="stat-label">Gió</p><p class="stat-value" id="wind">—</p></div></div>
+        <div class="stat"><span class="stat-icon">🔽</span><div><p class="stat-label">Áp suất</p><p class="stat-value" id="pressure">—</p></div></div>
+        <div class="stat"><span class="stat-icon">👁️</span><div><p class="stat-label">Tầm nhìn</p><p class="stat-value" id="visibility">—</p></div></div>
+        <div class="stat"><span class="stat-icon">☁️</span><div><p class="stat-label">Mây</p><p class="stat-value" id="clouds">—</p></div></div>
+      </div>
+
+      <div class="tips" id="tipsSection">
+        <h3 class="tips-title">🐝 Gợi ý từ Beeso</h3>
+        <article class="tip">
+          <div class="tip-icon">👕</div>
+          <div>
+            <h3 id="wearLabel">Mặc gì / Mang gì</h3>
+            <p id="wearText">—</p>
+          </div>
+        </article>
+        <article class="tip">
+          <div class="tip-icon">📝</div>
+          <div>
+            <h3 id="remindLabel">Lời nhắc</h3>
+            <p id="remindText">—</p>
+          </div>
+        </article>
+        <article class="tip wish">
+          <div class="tip-icon">💛</div>
+          <div>
+            <h3 id="wishLabel">Lời chúc</h3>
+            <p id="wishText">—</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <p class="footer-note">Beeso Weather · thời tiết dễ thương cho mọi chuyến đi</p>
+  </main>
+
+  <script>
+    const API_BASE = "https://api.openweathermap.org/data/2.5/weather";
+    const STORAGE_KEY = "beeso_owm_api_key";
+    const DEFAULT_API_KEY = "d108610f18b86554d00c1c40cceb665d";
+
+    const form = document.getElementById("searchForm");
+    const cityInput = document.getElementById("cityInput");
+    const statusEl = document.getElementById("status");
+    const weatherCard = document.getElementById("weatherCard");
+    const weatherStage = document.getElementById("weatherStage");
+    const effectPreview = document.getElementById("effectPreview");
+    const apiKeyInput = document.getElementById("apiKeyInput");
+    const saveApiKeyBtn = document.getElementById("saveApiKey");
+    const apiNote = document.getElementById("apiNote");
+
+    const els = {
+      cityName: document.getElementById("cityName"),
+      localTime: document.getElementById("localTime"),
+      temperature: document.getElementById("temperature"),
+      description: document.getElementById("description"),
+      humidity: document.getElementById("humidity"),
+      feelsLike: document.getElementById("feelsLike"),
+      wind: document.getElementById("wind"),
+      pressure: document.getElementById("pressure"),
+      visibility: document.getElementById("visibility"),
+      clouds: document.getElementById("clouds"),
+      langBadge: document.getElementById("langBadge"),
+      wearLabel: document.getElementById("wearLabel"),
+      wearText: document.getElementById("wearText"),
+      remindLabel: document.getElementById("remindLabel"),
+      remindText: document.getElementById("remindText"),
+      wishLabel: document.getElementById("wishLabel"),
+      wishText: document.getElementById("wishText"),
+    };
+
+    const COUNTRY_LANG = {
+      VN: "vi", KR: "ko", JP: "ja", CN: "zh", TW: "zh", HK: "zh",
+      TH: "th", FR: "fr", BE: "fr", DE: "de", AT: "de",
+      ES: "es", MX: "es", AR: "es", CL: "es", CO: "es",
+      US: "en", GB: "en", AU: "en", CA: "en", NZ: "en", IE: "en",
+      SG: "en", PH: "en", IN: "en", MY: "en", ID: "en",
+    };
+
+    const LANG_META = {
+      vi: { label: "Tiếng Việt", flag: "🇻🇳" },
+      ko: { label: "한국어", flag: "🇰🇷" },
+      ja: { label: "日本語", flag: "🇯🇵" },
+      zh: { label: "中文", flag: "🇨🇳" },
+      th: { label: "ภาษาไทย", flag: "🇹🇭" },
+      fr: { label: "Français", flag: "🇫🇷" },
+      de: { label: "Deutsch", flag: "🇩🇪" },
+      es: { label: "Español", flag: "🇪🇸" },
+      en: { label: "English", flag: "🌐" },
+    };
+
+    const UI_LABELS = {
+      vi: { wear: "Mặc gì / Mang gì", remind: "Lời nhắc", wish: "Lời chúc" },
+      en: { wear: "Wear / Bring", remind: "Reminder", wish: "Wish" },
+      ko: { wear: "옷차림 / 준비물", remind: "알림", wish: "응원" },
+      ja: { wear: "服装 / 持ち物", remind: "リマインド", wish: "ひとこと" },
+      zh: { wear: "穿什么 / 带什么", remind: "提醒", wish: "祝福" },
+      th: { wear: "แต่งตัว / พกอะไร", remind: "เตือน", wish: "อวยพร" },
+      fr: { wear: "Porter / Emporter", remind: "Rappel", wish: "Vœu" },
+      de: { wear: "Anziehen / Mitnehmen", remind: "Hinweis", wish: "Wunsch" },
+      es: { wear: "Qué ponerse / llevar", remind: "Recordatorio", wish: "Deseo" },
+    };
+
+    // Tips by language + weather type. {city} is replaced with city name.
+    const TIPS = {
+      vi: {
+        clear: {
+          wear: "Áo nhẹ, kính râm và kem chống nắng. Nếu mát thì thêm một lớp mỏng.",
+          remind: "Uống đủ nước và tránh đứng nắng lâu quá nhé.",
+          wish: "Chúc {city} một ngày nắng đẹp, Beeso bay theo bạn! ☀️",
+        },
+        clouds: {
+          wear: "Áo khoác nhẹ, giày thoải mái. Mang theo áo mưa mỏng phòng khi trời trở.",
+          remind: "Thời tiết dễ đổi — kiểm tra lại trước khi ra ngoài lâu.",
+          wish: "Mây dịu dàng, ngày của bạn cũng êm ả nhé! ☁️",
+        },
+        rain: {
+          wear: "Áo mưa / ô, giày chống nước, áo khoác mỏng.",
+          remind: "Đường trơn — đi chậm và giữ đồ điện tử khô ráo.",
+          wish: "Mưa rơi dịu dàng, bạn vẫn ấm áp và vui vẻ! 🌧️",
+        },
+        thunder: {
+          wear: "Áo mưa chắc chắn, tránh đồ kim loại lộ ngoài. Ở trong nhà nếu có thể.",
+          remind: "Tránh cây cao, chỗ trống trải khi có sấm sét.",
+          wish: "Beeso cầu mong bạn an toàn qua cơn bão! ⚡",
+        },
+        snow: {
+          wear: "Áo ấm, khăn, găng tay, giày chống trượt.",
+          remind: "Giữ ấm tay chân, cẩn thận đường đóng băng.",
+          wish: "Tuyết đẹp lắm — giữ ấm và tận hưởng khoảnh khắc nhé! ❄️",
+        },
+        mist: {
+          wear: "Áo khoác mỏng, khẩu trang nếu không khí kém.",
+          remind: "Tầm nhìn hạn chế — lái xe / đi xe chậm lại.",
+          wish: "Sương mờ nhưng hy vọng ngày bạn vẫn rõ ràng! 🌫️",
+        },
+      },
+      en: {
+        clear: {
+          wear: "Light clothes, sunglasses, and sunscreen. Add a light layer if it’s cool.",
+          remind: "Stay hydrated and don’t stay in direct sun too long.",
+          wish: "Have a bright, lovely day in {city}! ☀️",
+        },
+        clouds: {
+          wear: "A light jacket and comfy shoes. Pack a compact rain layer just in case.",
+          remind: "Weather can shift — double-check before long outdoor plans.",
+          wish: "Soft skies, soft vibes — enjoy {city} today! ☁️",
+        },
+        rain: {
+          wear: "Umbrella / raincoat, water-resistant shoes, a light jacket.",
+          remind: "Roads are slippery — slow down and keep gadgets dry.",
+          wish: "Stay dry and cozy through the rain in {city}! 🌧️",
+        },
+        thunder: {
+          wear: "Solid rain gear. Prefer staying indoors if possible.",
+          remind: "Avoid tall trees and open fields during lightning.",
+          wish: "Beeso wishes you a safe storm day in {city}! ⚡",
+        },
+        snow: {
+          wear: "Warm coat, scarf, gloves, and non-slip boots.",
+          remind: "Keep extremities warm and watch for icy paths.",
+          wish: "Stay warm and enjoy the snow magic in {city}! ❄️",
+        },
+        mist: {
+          wear: "A light jacket; a mask if air quality is poor.",
+          remind: "Low visibility — drive and ride carefully.",
+          wish: "Even in the mist, may your day in {city} feel clear! 🌫️",
+        },
+      },
+      ko: {
+        clear: {
+          wear: "가벼운 옷, 선글라스, 선크림. 선선하면 얇은 겉옷을 챙기세요.",
+          remind: "물을 자주 마시고 햇볕에 너무 오래 있지 마세요.",
+          wish: "{city}의 맑은 하루, 기분 좋은 비행처럼! ☀️",
+        },
+        clouds: {
+          wear: "얇은 겉옷과 편한 신발. 만약을 위해 우산을 챙기세요.",
+          remind: "날씨가 바뀔 수 있어요. 외출 전 한 번 더 확인하세요.",
+          wish: "구름처럼 부드러운 하루 보내세요! ☁️",
+        },
+        rain: {
+          wear: "우산/우비, 방수 신발, 가벼운 재킷.",
+          remind: "길이 미끄러워요. 천천히, 전자기기는 건조하게!",
+          wish: "비 오는 {city}에서도 따뜻하고 행복하세요! 🌧️",
+        },
+        thunder: {
+          wear: "튼튼한 우비. 가능하면 실내에 머무르세요.",
+          remind: "번개 칠 때는 높은 나무와 넓은 공터를 피하세요.",
+          wish: "안전한 하루 되시길 Beeso가 응원해요! ⚡",
+        },
+        snow: {
+          wear: "두꺼운 코트, 목도리, 장갑, 미끄럼 방지 부츠.",
+          remind: "손발을 따뜻하게, 빙판길을 조심하세요.",
+          wish: "포근하게, 예쁜 눈 풍경을 즐기세요! ❄️",
+        },
+        mist: {
+          wear: "얇은 겉옷. 공기가 안 좋으면 마스크를 쓰세요.",
+          remind: "시야가 흐려요. 운전·보행 모두 천천히!",
+          wish: "안개 속에서도 맑은 하루 되기를! 🌫️",
+        },
+      },
+      ja: {
+        clear: {
+          wear: "軽い服装、サングラス、日焼け止め。涼しい時は薄い羽織を。",
+          remind: "水分補給を忘れずに。直射日光は控えめに。",
+          wish: "{city}の晴れやかな一日を！☀️",
+        },
+        clouds: {
+          wear: "薄い羽織と歩きやすい靴。念のため折りたたみ傘を。",
+          remind: "天気が変わりやすい日。長時間の外出前に再確認を。",
+          wish: "やさしい空のように、穏やかな一日を！☁️",
+        },
+        rain: {
+          wear: "傘・レインコート、防水の靴、薄いジャケット。",
+          remind: "路面が滑りやすいです。電子機器は濡らさないように。",
+          wish: "雨の日もぬくぬく、笑顔で過ごせますように！🌧️",
+        },
+        thunder: {
+          wear: "しっかりした雨具を。できれば室内で過ごして。",
+          remind: "雷の時は高い木や開けた場所を避けて。",
+          wish: "安全第一で！Beesoが応援しています⚡",
+        },
+        snow: {
+          wear: "暖かいコート、マフラー、手袋、滑りにくい靴。",
+          remind: "手先・足先を温め、凍結路に注意。",
+          wish: "あたたかく、雪景色を楽しんでね！❄️",
+        },
+        mist: {
+          wear: "薄い羽織。空気が悪い時はマスクを。",
+          remind: "視界不良です。運転・歩行はゆっくりと。",
+          wish: "霧の中でも、心は晴れやかに！🌫️",
+        },
+      },
+      zh: {
+        clear: {
+          wear: "轻便衣物、墨镜和防晒。凉快就再加一件薄外套。",
+          remind: "多喝水，别在烈日下待太久。",
+          wish: "愿{city}的阳光陪你度过美好一天！☀️",
+        },
+        clouds: {
+          wear: "薄外套和舒适鞋子，顺便带把折叠伞。",
+          remind: "天气多变，出门前再确认一次。",
+          wish: "愿云朵温柔，心情也轻松！☁️",
+        },
+        rain: {
+          wear: "雨伞/雨衣、防水鞋、薄外套。",
+          remind: "路面湿滑，慢行，电子产品要防潮。",
+          wish: "雨天也要温暖开心哦！🌧️",
+        },
+        thunder: {
+          wear: "结实雨具。尽量待在室内。",
+          remind: "打雷时避开大树和空旷处。",
+          wish: "Beeso祝你平安度过暴风雨！⚡",
+        },
+        snow: {
+          wear: "厚外套、围巾、手套、防滑靴。",
+          remind: "注意手脚保暖，小心结冰路面。",
+          wish: "保暖开心，欣赏雪景吧！❄️",
+        },
+        mist: {
+          wear: "薄外套；空气不好就戴口罩。",
+          remind: "能见度低，开车走路都要小心。",
+          wish: "雾再浓，也愿你心里晴朗！🌫️",
+        },
+      },
+      th: {
+        clear: {
+          wear: "เสื้อบาง แว่นกันแดด และครีมกันแดด ถ้าเย็นใส่เสื้อคลุมบาง",
+          remind: "ดื่มน้ำให้พอ และอย่าอยู่กลางแดดนานเกินไป",
+          wish: "ขอให้วันแดดดีที่ {city} สดใสเหมือนรอยยิ้มคุณ! ☀️",
+        },
+        clouds: {
+          wear: "เสื้อคลุมบาง รองเท้าสบาย และพกร่มพับไว้",
+          remind: "อากาศเปลี่ยนง่าย ตรวจอีกรอบก่อนออกไปนาน",
+          wish: "ขอให้วันที่มีเมฆเป็นวันที่นุ่มนวล! ☁️",
+        },
+        rain: {
+          wear: "ร่ม/เสื้อกันฝน รองเท้ากันน้ำ และเสื้อคลุมบาง",
+          remind: "ถนนลื่น ขับช้า และกันของเปียก",
+          wish: "ให้อุ่นใจแม้ฝนตกที่ {city}! 🌧️",
+        },
+        thunder: {
+          wear: "ชุดกันฝนแน่นหนา อยู่ภายในถ้าได้",
+          remind: "เลี่ยงต้นไม้สูงและที่โล่งเมื่อมีฟ้าผ่า",
+          wish: "Beeso อวยพรให้คุณปลอดภัย! ⚡",
+        },
+        snow: {
+          wear: "เสื้อหนา ผ้าพันคอ ถุงมือ รองเท้ากันลื่น",
+          remind: "รักษาความอบอุ่น และระวังพื้นลื่น",
+          wish: "อบอุ่นและสนุกกับหิมะนะ! ❄️",
+        },
+        mist: {
+          wear: "เสื้อคลุมบาง และหน้ากากถ้าอากาศไม่ดี",
+          remind: "ทัศนวิสัยต่ำ ขับและเดินช้าๆ",
+          wish: "แม้หมอกจาง ก็ขอให้ใจแจ่มใส! 🌫️",
+        },
+      },
+      fr: {
+        clear: {
+          wear: "Vêtements légers, lunettes de soleil et crème solaire.",
+          remind: "Buvez de l’eau et évitez le soleil trop longtemps.",
+          wish: "Belle journée ensoleillée à {city} ! ☀️",
+        },
+        clouds: {
+          wear: "Veste légère, chaussures confortables, parapluie compact.",
+          remind: "Le temps peut changer — vérifiez avant de sortir longtemps.",
+          wish: "Ciel doux, journée douce à {city} ! ☁️",
+        },
+        rain: {
+          wear: "Parapluie / imperméable, chaussures résistantes à l’eau.",
+          remind: "Sol glissant — ralentissez et protégez vos appareils.",
+          wish: "Restez au sec et de bonne humeur ! 🌧️",
+        },
+        thunder: {
+          wear: "Équipement de pluie solide. Préférez rester à l’intérieur.",
+          remind: "Évitez les grands arbres et les espaces ouverts.",
+          wish: "Beeso vous souhaite une journée en sécurité ! ⚡",
+        },
+        snow: {
+          wear: "Manteau chaud, écharpe, gants, bottes antidérapantes.",
+          remind: "Gardez vos extrémités au chaud, attention au verglas.",
+          wish: "Restez au chaud et profitez de la neige ! ❄️",
+        },
+        mist: {
+          wear: "Veste légère ; masque si l’air est mauvais.",
+          remind: "Visibilité réduite — conduisez prudemment.",
+          wish: "Que votre journée reste claire malgré la brume ! 🌫️",
+        },
+      },
+      de: {
+        clear: {
+          wear: "Leichte Kleidung, Sonnenbrille und Sonnencreme.",
+          remind: "Trinken Sie genug und meiden Sie zu lange direkte Sonne.",
+          wish: "Einen strahlenden Tag in {city}! ☀️",
+        },
+        clouds: {
+          wear: "Leichte Jacke, bequeme Schuhe, kompakter Regenschirm.",
+          remind: "Wetter kann wechseln — vor längeren Touren nochmal checken.",
+          wish: "Sanfte Wolken, sanfter Tag! ☁️",
+        },
+        rain: {
+          wear: "Schirm/Regenjacke, wasserfeste Schuhe, leichte Jacke.",
+          remind: "Rutschig — langsam und Elektronik trocken halten.",
+          wish: "Bleiben Sie trocken und gut gelaunt! 🌧️",
+        },
+        thunder: {
+          wear: "Solide Regenkleidung. Am besten drinnen bleiben.",
+          remind: "Bei Blitz hohe Bäume und offene Flächen meiden.",
+          wish: "Beeso wünscht Ihnen einen sicheren Tag! ⚡",
+        },
+        snow: {
+          wear: "Warmer Mantel, Schal, Handschuhe, rutschfeste Schuhe.",
+          remind: "Hände/Füße warm halten, Glätte beachten.",
+          wish: "Bleiben Sie warm und genießen Sie den Schnee! ❄️",
+        },
+        mist: {
+          wear: "Leichte Jacke; Maske bei schlechter Luft.",
+          remind: "Sicht schlecht — vorsichtig fahren und gehen.",
+          wish: "Trotz Nebel einen klaren Tag! 🌫️",
+        },
+      },
+      es: {
+        clear: {
+          wear: "Ropa ligera, gafas de sol y protector solar.",
+          remind: "Hidrátate y no te quedes mucho bajo el sol directo.",
+          wish: "¡Que tengas un día brillante en {city}! ☀️",
+        },
+        clouds: {
+          wear: "Chaqueta ligera, zapatos cómodos y un paraguas pequeño.",
+          remind: "El clima puede cambiar — revisa antes de salir mucho.",
+          wish: "Cielo suave, día suave en {city}. ☁️",
+        },
+        rain: {
+          wear: "Paraguas/impermeable, zapatos resistentes al agua.",
+          remind: "Piso resbaladizo — ve despacio y protege tus aparatos.",
+          wish: "¡Mantente seco y con buena energía! 🌧️",
+        },
+        thunder: {
+          wear: "Equipo de lluvia firme. Mejor quedarse bajo techo.",
+          remind: "Evita árboles altos y espacios abiertos con rayos.",
+          wish: "Beeso te desea un día seguro. ⚡",
+        },
+        snow: {
+          wear: "Abrigo, bufanda, guantes y botas antideslizantes.",
+          remind: "Mantén manos y pies calientes; cuidado con el hielo.",
+          wish: "¡Abrígate y disfruta la nieve! ❄️",
+        },
+        mist: {
+          wear: "Chaqueta ligera; mascarilla si el aire es malo.",
+          remind: "Poca visibilidad — conduce y camina con cuidado.",
+          wish: "Aunque haya niebla, que tu día sea claro. 🌫️",
+        },
+      },
+    };
+
+    function getApiKey() {
+      return localStorage.getItem(STORAGE_KEY)?.trim() || DEFAULT_API_KEY;
+    }
+
+    function setApiKey(key) {
+      localStorage.setItem(STORAGE_KEY, key.trim());
+    }
+
+    function setStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.classList.toggle("error", isError);
+    }
+
+    function langFromCountry(country) {
+      return COUNTRY_LANG[(country || "").toUpperCase()] || "en";
+    }
+
+    function formatLocalTime(timezoneOffsetSeconds) {
+      const utc = Date.now() + new Date().getTimezoneOffset() * 60_000;
+      const local = new Date(utc + timezoneOffsetSeconds * 1000);
+      return local.toLocaleString("vi-VN", {
+        weekday: "long",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
+    function mapCondition(main, id) {
+      const m = (main || "").toLowerCase();
+      if (m === "thunderstorm" || (id >= 200 && id < 300)) return "thunder";
+      if (m === "drizzle" || (id >= 300 && id < 400)) return "rain";
+      if (m === "rain" || (id >= 500 && id < 600)) return "rain";
+      if (m === "snow" || (id >= 600 && id < 700)) return "snow";
+      if (["mist","smoke","haze","dust","fog","sand","ash","squall","tornado"].includes(m) || (id >= 700 && id < 800)) return "mist";
+      if (m === "clouds" || [801, 802, 803, 804].includes(id)) return id === 801 ? "clear" : "clouds";
+      return "clear";
+    }
+
+    function buildTips(condition, city, country, temp) {
+      const lang = langFromCountry(country);
+      const pack = TIPS[lang] || TIPS.en;
+      const tip = { ...(pack[condition] || pack.clear) };
+      const labels = UI_LABELS[lang] || UI_LABELS.en;
+      const meta = LANG_META[lang] || LANG_META.en;
+
+      // Extra temp-based note (append in same language when possible)
+      let extra = "";
+      if (temp <= 10) {
+        const cold = {
+          vi: " Trời khá lạnh — ưu tiên áo ấm.",
+          en: " It’s quite cold — prioritize warm layers.",
+          ko: " 꽤 추워요. 따뜻하게 입으세요.",
+          ja: " かなり寒いです。防寒を優先して。",
+          zh: " 天气偏冷，注意保暖。",
+          th: " อากาศค่อนข้างหนาว ใส่เสื้ออุ่นๆ",
+          fr: " Il fait plutôt froid — privilégiez les couches chaudes.",
+          de: " Es ist recht kalt — warme Schichten bevorzugen.",
+          es: " Hace bastante frío — prioriza capas abrigadas.",
+        };
+        extra = cold[lang] || cold.en;
+      } else if (temp >= 33) {
+        const hot = {
+          vi: " Trời nóng — chọn chất liệu thoáng mát.",
+          en: " It’s hot — choose breathable fabrics.",
+          ko: " 더워요. 통풍 잘 되는 옷을 고르세요.",
+          ja: " 暑いです。通気性の良い服を。",
+          zh: " 天气很热，选透气衣物。",
+          th: " อากาศร้อน เลือกผ้าโปร่งใส่สบาย",
+          fr: " Il fait chaud — privilégiez les tissus respirants.",
+          de: " Es ist heiß — atmungsaktive Stoffe wählen.",
+          es: " Hace calor — elige telas transpirables.",
+        };
+        extra = hot[lang] || hot.en;
+      }
+
+      return {
+        lang,
+        meta,
+        labels,
+        wear: (tip.wear + extra).replaceAll("{city}", city),
+        remind: tip.remind.replaceAll("{city}", city),
+        wish: tip.wish.replaceAll("{city}", city),
+      };
+    }
+
+    function createDrops(container, count, fullPage = false) {
+      const frag = document.createDocumentFragment();
+      for (let i = 0; i < count; i++) {
+        const drop = document.createElement("span");
+        drop.className = "drop";
+        drop.style.left = `${Math.random() * 100}%`;
+        drop.style.animationDuration = `${0.7 + Math.random() * 0.9}s`;
+        drop.style.animationDelay = `${Math.random() * 2}s`;
+        if (fullPage) drop.style.height = `${12 + Math.random() * 10}px`;
+        frag.appendChild(drop);
+      }
+      container.appendChild(frag);
+    }
+
+    function createFlakes(container, count) {
+      const frag = document.createDocumentFragment();
+      const glyphs = ["❄", "✻", "✦"];
+      for (let i = 0; i < count; i++) {
+        const flake = document.createElement("span");
+        flake.className = "flake";
+        flake.textContent = glyphs[i % glyphs.length];
+        flake.style.left = `${Math.random() * 100}%`;
+        flake.style.animationDuration = `${2.2 + Math.random() * 2.8}s`;
+        flake.style.animationDelay = `${Math.random() * 3}s`;
+        flake.style.fontSize = `${0.55 + Math.random() * 0.55}rem`;
+        frag.appendChild(flake);
+      }
+      container.appendChild(frag);
+    }
+
+    function buildCardEffect(type) {
+      effectPreview.innerHTML = "";
+      const wrap = document.createElement("div");
+      if (type === "clear") {
+        wrap.className = "fx-sun";
+        wrap.innerHTML = `<div class="sun"></div><div class="cloud one" style="opacity:.45"></div>`;
+      } else if (type === "clouds") {
+        wrap.className = "fx-cloud";
+        wrap.innerHTML = `<div class="cloud one"></div><div class="cloud two"></div>`;
+      } else if (type === "rain") {
+        wrap.className = "fx-rain";
+        wrap.innerHTML = `<div class="cloud one"></div><div class="cloud two"></div>`;
+        createDrops(wrap, 28);
+      } else if (type === "thunder") {
+        wrap.className = "fx-thunder";
+        wrap.innerHTML = `<div class="cloud one"></div><div class="cloud two"></div><div class="bolt"></div>`;
+        createDrops(wrap, 34);
+      } else if (type === "snow") {
+        wrap.className = "fx-snow";
+        wrap.innerHTML = `<div class="cloud one"></div><div class="cloud two"></div>`;
+        createFlakes(wrap, 22);
+      } else {
+        wrap.className = "fx-mist";
+        wrap.innerHTML = `<div class="mist-layer"></div><div class="cloud one" style="opacity:.35"></div>`;
+      }
+      effectPreview.appendChild(wrap);
+    }
+
+    function buildStageEffect(type) {
+      weatherStage.innerHTML = "";
+      if (type === "clear") {
+        const sun = document.createElement("div");
+        sun.className = "bg-sun";
+        weatherStage.appendChild(sun);
+        return;
+      }
+      if (type === "clouds") {
+        for (let i = 0; i < 4; i++) {
+          const cloud = document.createElement("div");
+          cloud.className = "bg-cloud";
+          cloud.style.top = `${12 + i * 18}%`;
+          cloud.style.left = `${-5 + i * 22}%`;
+          cloud.style.animationDelay = `${-i * 2}s`;
+          cloud.style.opacity = `${0.35 + i * 0.08}`;
+          weatherStage.appendChild(cloud);
+        }
+        return;
+      }
+      if (type === "rain" || type === "thunder") {
+        const layer = document.createElement("div");
+        layer.className = "bg-rain";
+        layer.style.position = "absolute";
+        layer.style.inset = "0";
+        createDrops(layer, 55, true);
+        weatherStage.appendChild(layer);
+        if (type === "thunder") {
+          const bolt1 = document.createElement("div");
+          bolt1.className = "bg-bolt";
+          bolt1.style.left = "28%";
+          const bolt2 = document.createElement("div");
+          bolt2.className = "bg-bolt";
+          bolt2.style.left = "62%";
+          bolt2.style.animationDelay = "1.1s";
+          weatherStage.appendChild(bolt1);
+          weatherStage.appendChild(bolt2);
+        }
+        return;
+      }
+      if (type === "snow") {
+        const layer = document.createElement("div");
+        layer.className = "bg-snow";
+        layer.style.position = "absolute";
+        layer.style.inset = "0";
+        createFlakes(layer, 40);
+        weatherStage.appendChild(layer);
+        return;
+      }
+      const mist = document.createElement("div");
+      mist.className = "bg-mist";
+      weatherStage.appendChild(mist);
+    }
+
+    function applyTheme(type) {
+      document.body.className = `theme-${type}`;
+      buildCardEffect(type);
+      buildStageEffect(type);
+    }
+
+    function renderWeather(data) {
+      const weather = data.weather?.[0] || {};
+      const main = data.main || {};
+      const wind = data.wind || {};
+      const condition = mapCondition(weather.main, weather.id);
+      const country = data.sys?.country || "";
+      const city = data.name || "there";
+      const temp = Math.round(main.temp ?? 0);
+      const tips = buildTips(condition, city, country, temp);
+
+      els.cityName.textContent = `${city}${country ? ", " + country : ""}`;
+      els.localTime.textContent = formatLocalTime(data.timezone || 0);
+      els.temperature.textContent = `${temp}°`;
+      els.description.textContent = weather.description || weather.main || "—";
+      els.humidity.textContent = `${main.humidity ?? "—"}%`;
+      els.feelsLike.textContent = `${Math.round(main.feels_like)}°C`;
+      els.wind.textContent = `${(wind.speed ?? 0).toFixed(1)} m/s`;
+      els.pressure.textContent = `${main.pressure ?? "—"} hPa`;
+      els.visibility.textContent = data.visibility != null ? `${(data.visibility / 1000).toFixed(1)} km` : "—";
+      els.clouds.textContent = `${data.clouds?.all ?? "—"}%`;
+
+      els.langBadge.textContent = `${tips.meta.flag} ${tips.meta.label}`;
+      els.wearLabel.textContent = tips.labels.wear;
+      els.remindLabel.textContent = tips.labels.remind;
+      els.wishLabel.textContent = tips.labels.wish;
+      els.wearText.textContent = tips.wear;
+      els.remindText.textContent = tips.remind;
+      els.wishText.textContent = tips.wish;
+
+      weatherCard.classList.remove("hidden");
+      applyTheme(condition);
+    }
+
+    async function fetchWeather(city) {
+      const apiKey = getApiKey();
+      if (!apiKey) {
+        setStatus("Hãy thêm API key OpenWeatherMap ở phần cài đặt phía trên nhé.", true);
+        document.querySelector(".api-panel details")?.setAttribute("open", "");
+        return;
+      }
+
+      setStatus(`Đang tìm thời tiết cho “${city}”...`);
+      weatherCard.classList.add("hidden");
+
+      // First call without lang lock to get country, then optional second for local description
+      const url = `${API_BASE}?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (res.status === 401) throw new Error("API key không hợp lệ. Kiểm tra lại key nhé.");
+          if (res.status === 404) throw new Error("Không tìm thấy thành phố này. Thử tên khác nhé!");
+          throw new Error(data.message || "Không lấy được dữ liệu thời tiết.");
+        }
+
+        // Fetch description in local language when possible
+        const lang = langFromCountry(data.sys?.country);
+        if (lang !== "en") {
+          try {
+            const res2 = await fetch(`${API_BASE}?id=${data.id}&appid=${apiKey}&units=metric&lang=${lang}`);
+            if (res2.ok) {
+              const local = await res2.json();
+              if (local.weather?.[0]?.description) {
+                data.weather[0].description = local.weather[0].description;
+              }
+            }
+          } catch (_) {
+            /* keep English description */
+          }
+        }
+
+        renderWeather(data);
+        setStatus(`Đã cập nhật thời tiết cho ${data.name} ✨`);
+      } catch (err) {
+        setStatus(err.message || "Có lỗi xảy ra khi gọi API.", true);
+      }
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const city = cityInput.value.trim();
+      if (!city) return;
+      fetchWeather(city);
+    });
+
+    saveApiKeyBtn.addEventListener("click", () => {
+      const key = apiKeyInput.value.trim();
+      if (!key) {
+        apiNote.textContent = "Bạn chưa nhập key.";
+        apiNote.style.color = "#c4475a";
+        return;
+      }
+      setApiKey(key);
+      apiNote.textContent = "Đã lưu API key trên trình duyệt này.";
+      apiNote.style.color = "#1f7fc4";
+      setStatus("API key đã sẵn sàng. Hãy tìm một thành phố đi!");
+    });
+
+    (function init() {
+      // migrate old key storage if present
+      const old = localStorage.getItem("skybuddy_owm_api_key");
+      if (old && !localStorage.getItem(STORAGE_KEY)) localStorage.setItem(STORAGE_KEY, old);
+
+      apiKeyInput.value = getApiKey();
+      apiNote.textContent = "API key đã sẵn sàng.";
+      apiNote.style.color = "#1f7fc4";
+      setStatus("Nhập tên thành phố để Beeso dự báo nhé.");
+      applyTheme("clear");
+    })();
+  </script>
+</body>
+</html>
