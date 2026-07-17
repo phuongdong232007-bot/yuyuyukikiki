@@ -1,0 +1,2624 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BEETRIP · My Trip Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <style>
+:root {
+  --void: #070b14;
+  --night: #0e1628;
+  --mist: #1a2740;
+  --ink: #e8e2d6;
+  --ink-soft: #9aa8bc;
+  --gold: #d4b06a;
+  --gold-deep: #b8903e;
+  --gold-ink: #f0e0b8;
+  --teal: #5a9e9a;
+  --teal-deep: #3a7572;
+  --ember: #c47a5a;
+  --glass: rgba(14, 22, 40, 0.72);
+  --glass-border: rgba(212, 176, 106, 0.28);
+  --shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  --radius: 20px;
+  --font-display: "Cinzel", serif;
+  --font-body: "Outfit", sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { min-height: 100%; }
+
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--void);
+  overflow-x: hidden;
+}
+
+/* —— Mystical atmosphere —— */
+.bg-deco {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(90, 158, 154, 0.18), transparent 45%),
+    radial-gradient(ellipse at 85% 15%, rgba(212, 176, 106, 0.12), transparent 40%),
+    radial-gradient(ellipse at 50% 100%, rgba(196, 122, 90, 0.1), transparent 50%),
+    linear-gradient(180deg, #070b14 0%, #0e1628 50%, #0a1220 100%);
+}
+
+.bg-photo {
+  position: absolute;
+  inset: 0;
+  background-image: url("https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1920&q=80");
+  background-size: cover;
+  background-position: center;
+  opacity: 0.28;
+  filter: saturate(0.75) brightness(0.55);
+  animation: slow-zoom 28s ease-in-out infinite alternate;
+  transition: background-image 0.8s ease, opacity 0.6s ease;
+}
+
+.fog {
+  position: absolute;
+  inset: -20% -10%;
+  background:
+    radial-gradient(ellipse at 30% 60%, rgba(232, 226, 214, 0.08), transparent 40%),
+    radial-gradient(ellipse at 70% 40%, rgba(90, 158, 154, 0.1), transparent 45%);
+  animation: fog-drift 18s ease-in-out infinite;
+}
+
+.stars {
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+  background-image:
+    radial-gradient(1.5px 1.5px at 10% 20%, rgba(240, 224, 184, 0.9), transparent),
+    radial-gradient(1px 1px at 30% 70%, rgba(232, 226, 214, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 55% 15%, rgba(240, 224, 184, 0.85), transparent),
+    radial-gradient(1px 1px at 75% 45%, rgba(232, 226, 214, 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 88% 80%, rgba(240, 224, 184, 0.75), transparent),
+    radial-gradient(1px 1px at 45% 55%, rgba(232, 226, 214, 0.5), transparent);
+  animation: twinkle 5s ease-in-out infinite;
+}
+
+.float-bee {
+  position: absolute;
+  font-size: 1.35rem;
+  opacity: 0.55;
+  filter: drop-shadow(0 0 10px rgba(212, 176, 106, 0.45));
+  animation: buzz-fly 9s ease-in-out infinite;
+}
+
+.bee-1 { left: 8%; top: 22%; }
+.bee-2 { right: 10%; top: 40%; animation-delay: -3s; font-size: 1.1rem; }
+.bee-3 { left: 48%; bottom: 14%; animation-delay: -6s; font-size: 1rem; }
+
+@keyframes slow-zoom {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+@keyframes fog-drift {
+  0%, 100% { transform: translate(0, 0); opacity: 0.7; }
+  50% { transform: translate(3%, -2%); opacity: 1; }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.75; }
+}
+
+@keyframes buzz-fly {
+  0%, 100% { transform: translate(0, 0) rotate(-6deg); }
+  33% { transform: translate(14px, -18px) rotate(5deg); }
+  66% { transform: translate(-8px, 10px) rotate(-3deg); }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+.shell {
+  position: relative;
+  z-index: 1;
+  width: min(1120px, calc(100% - 2rem));
+  margin: 0 auto 3rem;
+  animation: rise 0.7s ease;
+}
+
+/* —— Top bar —— */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.25rem 0 0.75rem;
+}
+
+.hub-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.hub-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  background: rgba(14, 22, 40, 0.65);
+  border: 1px solid var(--glass-border);
+  color: var(--gold-ink);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.hub-link:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212, 176, 106, 0.55);
+}
+
+.hub-link.flash { color: var(--teal); }
+
+.lang-toggle {
+  display: inline-flex;
+  background: rgba(14, 22, 40, 0.7);
+  border-radius: 999px;
+  padding: 0.2rem;
+  border: 1px solid var(--glass-border);
+}
+
+.lang-btn {
+  border: none;
+  background: transparent;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.lang-btn:hover { color: var(--ink); }
+.lang-btn.active {
+  background: linear-gradient(135deg, var(--gold-deep), var(--gold));
+  color: #1a1205;
+}
+
+/* —— Hero —— */
+.hero {
+  position: relative;
+  min-height: min(72vh, 560px);
+  margin: 0.5rem 0 1.5rem;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow);
+}
+
+.hero-media {
+  position: absolute;
+  inset: 0;
+  background-image: url("https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1800&q=80");
+  background-size: cover;
+  background-position: center 40%;
+  transform: scale(1.02);
+  transition: background-image 0.9s ease, transform 8s ease;
+  animation: slow-zoom 24s ease-in-out infinite alternate;
+}
+
+.hero-veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(7, 11, 20, 0.35) 0%, rgba(7, 11, 20, 0.55) 45%, rgba(7, 11, 20, 0.88) 100%),
+    radial-gradient(ellipse at 50% 30%, rgba(212, 176, 106, 0.12), transparent 55%);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  min-height: min(72vh, 560px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  text-align: center;
+  padding: 2.5rem 1.5rem 2.2rem;
+}
+
+.logo-mark {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 0.9rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 2rem;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(240, 224, 184, 0.35), transparent 50%),
+    linear-gradient(145deg, rgba(26, 39, 64, 0.9), rgba(14, 22, 40, 0.95));
+  border: 1px solid rgba(212, 176, 106, 0.45);
+  box-shadow: 0 0 30px rgba(212, 176, 106, 0.2);
+  animation: shimmer 4s ease-in-out infinite;
+}
+
+.brand-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 6vw, 3.6rem);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--gold-ink);
+  line-height: 1.1;
+  text-shadow: 0 4px 28px rgba(0, 0, 0, 0.55);
+}
+
+.brand-title span {
+  color: var(--gold);
+  font-weight: 500;
+}
+
+.brand-sub {
+  margin-top: 0.45rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--teal);
+  font-weight: 500;
+}
+
+.slogan {
+  margin-top: 0.7rem;
+  max-width: 34rem;
+  color: var(--ink-soft);
+  font-weight: 400;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.hero-scroll-hint {
+  margin-top: 1.4rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(212, 176, 106, 0.7);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* —— Destination visual —— */
+.dest-visual {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 780px) {
+  .dest-visual { grid-template-columns: 1fr; }
+}
+
+.dest-photo-wrap {
+  position: relative;
+  min-height: 260px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow);
+}
+
+.dest-photo {
+  width: 100%;
+  height: 100%;
+  min-height: 260px;
+  object-fit: cover;
+  display: block;
+  filter: saturate(0.9) contrast(1.05);
+  transition: opacity 0.5s ease;
+}
+
+.dest-photo-caption {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 1.1rem 1.15rem;
+  background: linear-gradient(transparent, rgba(7, 11, 20, 0.92));
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+  color: var(--gold-ink);
+  font-size: 1rem;
+}
+
+.map-panel {
+  min-height: 260px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow);
+  background: var(--night);
+  position: relative;
+}
+
+#tripMap {
+  width: 100%;
+  height: 100%;
+  min-height: 260px;
+  background: #0a1220;
+}
+
+.map-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--ink-soft);
+  font-weight: 500;
+  line-height: 1.5;
+  z-index: 2;
+  background: rgba(7, 11, 20, 0.55);
+  pointer-events: none;
+}
+
+.map-placeholder.hide { display: none; }
+
+.leaflet-container {
+  font-family: var(--font-body);
+  background: #0a1220;
+}
+
+.leaflet-control-attribution {
+  background: rgba(7, 11, 20, 0.75) !important;
+  color: var(--ink-soft) !important;
+  font-size: 0.65rem !important;
+}
+
+.leaflet-control-attribution a { color: var(--gold) !important; }
+
+.myst-marker {
+  background: radial-gradient(circle, var(--gold) 0%, var(--gold-deep) 55%, transparent 70%);
+  border: 2px solid var(--gold-ink);
+  border-radius: 50%;
+  box-shadow: 0 0 16px rgba(212, 176, 106, 0.65);
+  width: 16px !important;
+  height: 16px !important;
+  margin-left: -8px !important;
+  margin-top: -8px !important;
+}
+
+/* —— Panels —— */
+.panel {
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 1.4rem 1.35rem 1.5rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 1.25rem;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+.section-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(212, 176, 106, 0.15);
+  border: 1px solid rgba(212, 176, 106, 0.3);
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+.section-head h2 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--gold-ink);
+  font-weight: 560;
+  letter-spacing: 0.04em;
+}
+
+.section-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(212, 176, 106, 0.55), rgba(90, 158, 154, 0.25), transparent);
+}
+
+.section-hint {
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  font-weight: 400;
+  margin: -0.35rem 0 1rem;
+  line-height: 1.5;
+}
+
+/* —— Form —— */
+.trip-form {
+  display: grid;
+  grid-template-columns: 1.4fr 0.7fr 1fr auto;
+  gap: 0.9rem;
+  align-items: end;
+}
+
+@media (max-width: 860px) {
+  .trip-form { grid-template-columns: 1fr 1fr; }
+  .trip-form .field-dest { grid-column: 1 / -1; }
+  .trip-form .form-actions { grid-column: 1 / -1; }
+}
+
+@media (max-width: 520px) {
+  .trip-form { grid-template-columns: 1fr; }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.field > span {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 176, 106, 0.3);
+  background: rgba(7, 11, 20, 0.65);
+  font-family: inherit;
+  font-size: 0.98rem;
+  font-weight: 500;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(212, 176, 106, 0.18);
+}
+
+.field select option { background: #0e1628; color: var(--ink); }
+
+.city-picker { position: relative; }
+
+.city-menu {
+  display: none;
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  background: #121c30;
+  border-radius: 14px;
+  border: 1px solid rgba(212, 176, 106, 0.35);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+}
+
+.city-menu.open { display: block; }
+
+.city-group-label {
+  position: sticky;
+  top: 0;
+  padding: 0.5rem 0.85rem;
+  background: linear-gradient(135deg, rgba(58, 117, 114, 0.45), rgba(26, 39, 64, 0.95));
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gold-ink);
+  letter-spacing: 0.04em;
+}
+
+.city-option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.city-option:hover,
+.city-option.active { background: rgba(212, 176, 106, 0.12); }
+
+.city-option .flag { font-size: 1.15rem; }
+.city-option .meta {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.8rem 1.35rem;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--gold-deep), var(--gold));
+  color: #1a1205;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(184, 144, 62, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+}
+
+.primary-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 14px 32px rgba(184, 144, 62, 0.45);
+}
+
+.primary-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.trip-summary {
+  display: none;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.trip-summary.show { display: flex; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: rgba(90, 158, 154, 0.18);
+  border: 1px solid rgba(90, 158, 154, 0.35);
+  color: #b8ddd9;
+}
+
+.chip.yellow {
+  background: rgba(212, 176, 106, 0.15);
+  border-color: rgba(212, 176, 106, 0.4);
+  color: var(--gold-ink);
+}
+
+.chip.green {
+  background: rgba(196, 122, 90, 0.15);
+  border-color: rgba(196, 122, 90, 0.4);
+  color: #e8c4b4;
+}
+
+.trip-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.9rem;
+  min-height: 160px;
+}
+
+.trip-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2.2rem 1rem;
+  color: var(--ink-soft);
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.day-col {
+  background: linear-gradient(180deg, rgba(26, 39, 64, 0.75), rgba(14, 22, 40, 0.9));
+  border: 1px solid rgba(212, 176, 106, 0.22);
+  border-radius: 18px;
+  padding: 0.9rem;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  animation: rise 0.4s ease;
+}
+
+.day-col:nth-child(2n) { border-color: rgba(90, 158, 154, 0.35); }
+.day-col:nth-child(3n) { border-color: rgba(196, 122, 90, 0.35); }
+
+.day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px dashed rgba(212, 176, 106, 0.25);
+}
+
+.day-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--gold-ink);
+  font-weight: 560;
+  letter-spacing: 0.04em;
+}
+
+.day-count {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: rgba(7, 11, 20, 0.55);
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+}
+
+.activity-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  flex: 1;
+  margin-bottom: 0.75rem;
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: 12px;
+  background: rgba(7, 11, 20, 0.45);
+  border: 1px solid rgba(90, 158, 154, 0.22);
+  font-size: 0.86rem;
+  font-weight: 500;
+  line-height: 1.35;
+  animation: rise 0.25s ease;
+}
+
+.activity-item.suggested {
+  border-color: rgba(212, 176, 106, 0.28);
+  background: linear-gradient(135deg, rgba(14, 22, 40, 0.7), rgba(58, 117, 114, 0.12));
+}
+
+.activity-item .bee-dot {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  margin-top: 0.05rem;
+  opacity: 0.85;
+}
+
+.activity-item .act-text { flex: 1; word-break: break-word; }
+
+.activity-item .act-del {
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 0.1rem;
+  border-radius: 6px;
+}
+
+.activity-item .act-del:hover {
+  color: #e8a0a0;
+  background: rgba(196, 100, 100, 0.15);
+}
+
+.add-act-btn {
+  margin-top: auto;
+  width: 100%;
+  border: 1px dashed rgba(212, 176, 106, 0.4);
+  background: rgba(7, 11, 20, 0.35);
+  color: var(--gold);
+  border-radius: 12px;
+  padding: 0.6rem 0.5rem;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.add-act-btn:hover {
+  background: rgba(212, 176, 106, 0.12);
+  border-color: var(--gold);
+  transform: translateY(-1px);
+}
+
+.weather-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 720px) {
+  .weather-grid { grid-template-columns: 1fr; }
+}
+
+.weather-card {
+  border-radius: 16px;
+  padding: 1.1rem;
+  background: linear-gradient(145deg, rgba(90, 158, 154, 0.18), rgba(14, 22, 40, 0.7));
+  border: 1px solid rgba(90, 158, 154, 0.3);
+}
+
+.weather-main {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.weather-icon { font-size: 2.6rem; line-height: 1; }
+
+.weather-temp {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--gold-ink);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.weather-place {
+  font-weight: 600;
+  color: var(--ink);
+  margin-top: 0.25rem;
+}
+
+.weather-desc {
+  color: var(--ink-soft);
+  font-weight: 500;
+  font-size: 0.9rem;
+  margin-top: 0.15rem;
+}
+
+.weather-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.9rem;
+}
+
+.weather-meta span {
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(7, 11, 20, 0.5);
+  border: 1px solid rgba(212, 176, 106, 0.2);
+  color: var(--ink);
+}
+
+.advice-box {
+  border-radius: 16px;
+  padding: 1.1rem;
+  background: linear-gradient(145deg, rgba(212, 176, 106, 0.12), rgba(14, 22, 40, 0.7));
+  border: 1px solid rgba(212, 176, 106, 0.28);
+}
+
+.advice-box h3 {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--gold);
+  margin-bottom: 0.55rem;
+  letter-spacing: 0.03em;
+}
+
+.advice-box ul {
+  margin-left: 1.1rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.advice-box li {
+  font-weight: 500;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.weather-placeholder {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 1.5rem 1rem;
+  color: var(--ink-soft);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.weather-loading { opacity: 0.7; font-style: italic; }
+
+.beeso-bridge {
+  margin-top: 1rem;
+  padding: 0.95rem 1rem;
+  border-radius: 14px;
+  background: rgba(212, 176, 106, 0.08);
+  border: 1px dashed rgba(212, 176, 106, 0.4);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.beeso-bridge p {
+  font-weight: 500;
+  font-size: 0.92rem;
+  color: var(--gold-ink);
+  line-height: 1.4;
+  flex: 1;
+  min-width: 200px;
+}
+
+.secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--teal-deep), var(--teal));
+  color: #e8f6f5;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.85rem;
+  box-shadow: 0 8px 18px rgba(58, 117, 114, 0.35);
+  transition: transform 0.2s ease;
+}
+
+.secondary-btn:hover { transform: translateY(-2px); }
+
+.site-foot {
+  text-align: center;
+  color: var(--ink-soft);
+  font-weight: 500;
+  font-size: 0.86rem;
+  margin-top: 0.5rem;
+  letter-spacing: 0.04em;
+}
+
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(3, 6, 12, 0.72);
+  backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-backdrop.open { display: flex; }
+
+.modal {
+  width: min(420px, 100%);
+  background: linear-gradient(160deg, #152038, #0e1628);
+  border: 1px solid rgba(212, 176, 106, 0.35);
+  border-radius: 20px;
+  padding: 1.35rem;
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.55);
+  animation: rise 0.25s ease;
+}
+
+.modal h3 {
+  font-family: var(--font-display);
+  color: var(--gold-ink);
+  margin-bottom: 0.85rem;
+  letter-spacing: 0.04em;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.55rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.ghost-btn {
+  border: 1px solid rgba(154, 168, 188, 0.35);
+  background: rgba(7, 11, 20, 0.45);
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.suggest-bar {
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.9rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 14px;
+  background: rgba(90, 158, 154, 0.1);
+  border: 1px dashed rgba(90, 158, 154, 0.4);
+}
+
+.suggest-bar.show { display: flex; }
+
+.suggest-bar p {
+  flex: 1;
+  min-width: 180px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #b8ddd9;
+  line-height: 1.4;
+}
+
+.suggest-btn {
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--teal-deep), var(--teal));
+  color: #e8f6f5;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.85rem;
+  box-shadow: 0 8px 18px rgba(58, 117, 114, 0.3);
+  transition: transform 0.2s ease;
+}
+
+.suggest-btn:hover { transform: translateY(-2px); }
+
+.gallery-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 560px) {
+  .gallery-strip { grid-template-columns: 1fr; }
+}
+
+.gallery-card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  min-height: 140px;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow);
+}
+
+.gallery-card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.75) saturate(0.85);
+  transition: transform 0.6s ease, filter 0.4s ease;
+}
+
+.gallery-card:hover img {
+  transform: scale(1.06);
+  filter: brightness(0.9) saturate(1);
+}
+
+.gallery-card span {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 0.65rem;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: var(--gold-ink);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+}
+
+  </style>
+</head>
+<body>
+  <div class="bg-deco" aria-hidden="true">
+    <div class="bg-photo" id="bgPhoto"></div>
+    <div class="stars"></div>
+    <div class="fog"></div>
+    <span class="float-bee bee-1">🐝</span>
+    <span class="float-bee bee-2">🐝</span>
+    <span class="float-bee bee-3">🐝</span>
+  </div>
+
+  <div class="shell">
+    <div class="top-bar">
+      <nav class="hub-links" aria-label="BEESO hub">
+        <a class="hub-link budget" href="index.html">🐝 BEESO BUDGET</a>
+        <a class="hub-link flash" href="korean-flashcards.html">🍵 Matcha</a>
+      </nav>
+      <div class="lang-toggle" role="group" data-i18n-aria="lang.aria" aria-label="Đổi ngôn ngữ Việt / Hàn">
+        <button type="button" class="lang-btn active" data-lang="vi">VI</button>
+        <button type="button" class="lang-btn" data-lang="ko">KO</button>
+      </div>
+    </div>
+
+    <header class="hero">
+      <div class="hero-media" id="heroMedia" aria-hidden="true"></div>
+      <div class="hero-veil" aria-hidden="true"></div>
+      <div class="hero-content">
+        <div class="logo-mark" aria-hidden="true">🐝</div>
+        <h1 class="brand-title">BEE<span>TRIP</span></h1>
+        <p class="brand-sub" data-i18n="header.name">My Trip Planner</p>
+        <p class="slogan" data-i18n="header.slogan">Theo dấu ong trong sương — lên lịch hành trình huyền bí của riêng bạn.</p>
+        <p class="hero-scroll-hint" data-i18n="hero.hint">Cuộn xuống để mở bản đồ hành trình</p>
+      </div>
+    </header>
+
+    <div class="gallery-strip" aria-hidden="true">
+      <figure class="gallery-card">
+        <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=800&q=80" alt="" loading="lazy" />
+        <span data-i18n="gal.1">Sương núi</span>
+      </figure>
+      <figure class="gallery-card">
+        <img src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=800&q=80" alt="" loading="lazy" />
+        <span data-i18n="gal.2">Hành trình</span>
+      </figure>
+      <figure class="gallery-card">
+        <img src="https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=800&q=80" alt="" loading="lazy" />
+        <span data-i18n="gal.3">Đêm thành phố</span>
+      </figure>
+    </div>
+
+    <!-- Form -->
+    <section class="panel">
+      <div class="section-head">
+        <span class="section-icon">✈️</span>
+        <h2 data-i18n="sec.form">Thông tin chuyến đi</h2>
+        <span class="section-line"></span>
+      </div>
+      <p class="section-hint" data-i18n="sec.form.hint">Chọn điểm đến · số ngày · ngân sách — ong sẽ tự gợi ý lịch trình sẵn, bạn chỉ việc chỉnh lại!</p>
+
+      <form class="trip-form" id="tripForm" autocomplete="off">
+        <label class="field field-dest">
+          <span data-i18n="field.dest">Điểm đến (Destination)</span>
+          <div class="city-picker">
+            <input
+              id="destination"
+              type="text"
+              data-i18n-placeholder="ph.dest"
+              placeholder="Gõ hoặc chọn thành phố..."
+              required
+              autocomplete="off"
+            />
+            <div class="city-menu" id="cityMenu" role="listbox"></div>
+          </div>
+        </label>
+
+        <label class="field">
+          <span data-i18n="field.days">Số ngày đi</span>
+          <select id="days" required>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span data-i18n="field.budget">Ngân sách dự kiến (Budget)</span>
+          <input
+            id="budget"
+            type="number"
+            min="0"
+            step="10000"
+            data-i18n-placeholder="ph.budget"
+            placeholder="vd: 5000000"
+            required
+          />
+        </label>
+
+        <div class="form-actions">
+          <button type="submit" class="primary-btn">
+            <span aria-hidden="true">🐝</span>
+            <span data-i18n="btn.start">Gợi ý kế hoạch ngay</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Destination photo + map -->
+    <section class="panel" id="mapSection">
+      <div class="section-head">
+        <span class="section-icon">🗺️</span>
+        <h2 data-i18n="sec.map">Bản đồ &amp; khung cảnh điểm đến</h2>
+        <span class="section-line"></span>
+      </div>
+      <p class="section-hint" data-i18n="sec.map.hint">Chọn thành phố rồi bắt đầu kế hoạch — ảnh và bản đồ sẽ mở đúng tọa độ điểm đến.</p>
+      <div class="dest-visual">
+        <div class="dest-photo-wrap">
+          <img
+            id="destPhoto"
+            class="dest-photo"
+            src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80"
+            alt="Destination"
+          />
+          <div class="dest-photo-caption" id="destCaption" data-i18n="map.waiting">Chọn điểm đến để hé lộ khung cảnh…</div>
+        </div>
+        <div class="map-panel">
+          <div id="tripMap"></div>
+          <div class="map-placeholder" id="mapPlaceholder" data-i18n="map.empty">Bản đồ đang chờ tọa độ hành trình của bạn.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trip schedule -->
+    <section class="panel">
+      <div class="section-head">
+        <span class="section-icon">🗓️</span>
+        <h2 data-i18n="sec.trip">Lịch trình gợi ý</h2>
+        <span class="section-line"></span>
+      </div>
+      <div class="suggest-bar" id="suggestBar">
+        <p data-i18n="suggest.note">🐝 Ong đã gợi ý sẵn lịch trình — bạn có thể sửa, xóa hoặc thêm hoạt động!</p>
+        <button type="button" class="suggest-btn" id="regenerateBtn">
+          <span aria-hidden="true">✨</span>
+          <span data-i18n="btn.regen">Gợi ý lại kế hoạch</span>
+        </button>
+      </div>
+      <div class="trip-summary" id="tripSummary"></div>
+      <div class="trip-container" id="tripContainer">
+        <p class="trip-empty" data-i18n="trip.empty">Chọn điểm đến rồi nhấn “Gợi ý kế hoạch ngay” — ong sẽ tự lên lịch từng ngày cho bạn!</p>
+      </div>
+    </section>
+
+    <!-- Weather advice (integrated with Beeso travel hub) -->
+    <section class="panel" id="weatherSection">
+      <div class="section-head">
+        <span class="section-icon">🌤️</span>
+        <h2 data-i18n="sec.weather">Thời tiết &amp; lời khuyên du lịch</h2>
+        <span class="section-line"></span>
+      </div>
+      <p class="section-hint" data-i18n="sec.weather.hint">Phân tích thời tiết điểm đến (Open-Meteo) · gợi ý mang gì / làm gì · kết nối sổ chi tiêu BEESO</p>
+
+      <div class="weather-grid" id="weatherGrid">
+        <p class="weather-placeholder" data-i18n="weather.empty">Chọn điểm đến và bắt đầu kế hoạch để xem thời tiết + lời khuyên du lịch.</p>
+      </div>
+
+      <div class="beeso-bridge">
+        <p data-i18n="bridge.text">Theo dõi chi tiêu chuyến đi trong sổ BEESO BUDGET — cùng vũ trụ ong huyền bí.</p>
+        <a class="secondary-btn" href="index.html" data-i18n="bridge.cta">Mở BEESO BUDGET →</a>
+      </div>
+    </section>
+
+    <footer class="site-foot" data-i18n="foot">
+      BEETRIP · My Trip Planner · Ong dẫn đường trong sương 🐝
+    </footer>
+  </div>
+
+  <!-- Add activity modal -->
+  <div class="modal-backdrop" id="actModal" role="dialog" aria-modal="true" aria-labelledby="actModalTitle">
+    <div class="modal">
+      <h3 id="actModalTitle" data-i18n="modal.title">Thêm hoạt động</h3>
+      <label class="field">
+        <span data-i18n="modal.label">Hoạt động</span>
+        <input id="actInput" type="text" data-i18n-placeholder="ph.act" placeholder="vd: Tham quan bảo tàng..." maxlength="120" />
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn" id="actCancel" data-i18n="modal.cancel">Hủy</button>
+        <button type="button" class="primary-btn" id="actSave" data-i18n="modal.save">Thêm</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+(() => {
+  "use strict";
+
+  const LANG_KEY = "beetrip_lang";
+  const PLAN_KEY = "beetrip_plan";
+
+  const DEFAULT_IMG = "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=80";
+  const CITY_IMAGES = {
+    "Hà Nội": "https://images.unsplash.com/photo-1583417319070-4a69db38a482?auto=format&fit=crop&w=1600&q=80",
+    "TP. Hồ Chí Minh": "https://images.unsplash.com/photo-1583417319070-4a69db38a482?auto=format&fit=crop&w=1600&q=80",
+    "Đà Nẵng": "https://images.unsplash.com/photo-1559592413-7eeb734e34d4?auto=format&fit=crop&w=1600&q=80",
+    "Đà Lạt": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1600&q=80",
+    "Hội An": "https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=1600&q=80",
+    "Huế": "https://images.unsplash.com/photo-1559592413-7eeb734e34d4?auto=format&fit=crop&w=1600&q=80",
+    "Nha Trang": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80",
+    "Phú Quốc": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80",
+    "Hạ Long": "https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=1600&q=80",
+    "Seoul": "https://images.unsplash.com/photo-1517154421773-0529f29ea451?auto=format&fit=crop&w=1600&q=80",
+    "Busan": "https://images.unsplash.com/photo-1546412414-e1885259563a?auto=format&fit=crop&w=1600&q=80",
+    "Jeju": "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=1600&q=80",
+    "Daegu": "https://images.unsplash.com/photo-1517154421773-0529f29ea451?auto=format&fit=crop&w=1600&q=80",
+    "Incheon": "https://images.unsplash.com/photo-1517154421773-0529f29ea451?auto=format&fit=crop&w=1600&q=80",
+    "Tokyo": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1600&q=80",
+    "Osaka": "https://images.unsplash.com/photo-1590559899731-a382839e5549?auto=format&fit=crop&w=1600&q=80",
+    "Kyoto": "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1600&q=80",
+    "Sapporo": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1600&q=80",
+    "Bangkok": "https://images.unsplash.com/photo-1563492065599-3520f775eeed?auto=format&fit=crop&w=1600&q=80",
+    "Chiang Mai": "https://images.unsplash.com/photo-1598970605070-a1a677831e43?auto=format&fit=crop&w=1600&q=80",
+    "Phuket": "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?auto=format&fit=crop&w=1600&q=80",
+    "Singapore": "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=1600&q=80",
+    "Kuala Lumpur": "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=1600&q=80",
+    "Penang": "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=1600&q=80",
+    "Bali": "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1600&q=80",
+    "Jakarta": "https://images.unsplash.com/photo-1555899434-860d6b0f4b8a?auto=format&fit=crop&w=1600&q=80",
+    "Paris": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1600&q=80",
+    "Nice": "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=1600&q=80",
+    "Rome": "https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=1600&q=80",
+    "Florence": "https://images.unsplash.com/photo-1541427468627-a87654e18b8a?auto=format&fit=crop&w=1600&q=80",
+    "Venice": "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=1600&q=80",
+    "New York": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=1600&q=80",
+    "Los Angeles": "https://images.unsplash.com/photo-1534190239940-9ba8944ea261?auto=format&fit=crop&w=1600&q=80",
+    "San Francisco": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=1600&q=80",
+    "Sydney": "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?auto=format&fit=crop&w=1600&q=80",
+    "Melbourne": "https://images.unsplash.com/photo-1514395462725-fb4566210144?auto=format&fit=crop&w=1600&q=80",
+  };
+
+  /* —— Cities: A–Z by country, with flag + coords for weather —— */
+  const CITIES = [
+    // 🇻🇳 Việt Nam
+    { name: "Đà Lạt", country: "Việt Nam", countryKo: "베트남", flag: "🇻🇳", lat: 11.9404, lon: 108.4583 },
+    { name: "Đà Nẵng", country: "Việt Nam", countryKo: "베트남", flag: "🇻🇳", lat: 16.0544, lon: 108.2022 },
+    { name: "Hà Nội", country: "Việt Nam", countryKo: "베트남", flag: "🇻🇳", lat: 21.0278, lon: 105.8342 },
+    { name: "Hạ Long", country: "Việt Nam", countryKo: "베트남", flag: "🇻🇳", lat: 20.9101, lon: 107.1839 },
+    { name: "Hội An", country: "Việt Nam", countryKo: "베트남", flag: "🇻🇳", lat: 15.8801, lon: 108.338 },
+    { name: "Huế", country: "Việt Nam", countryKo: "베트남", flag: "🇻🇳", lat: 16.4637, lon: 107.5909 },
+    { name: "Nha Trang", country: "Việt Nam", countryKo: "베트남", flag: "🇻🇳", lat: 12.2388, lon: 109.1967 },
+    { name: "Phú Quốc", country: "Việt Nam", countryKo: "베트남", flag: "🇻🇳", lat: 10.227, lon: 103.967 },
+    { name: "TP. Hồ Chí Minh", country: "Việt Nam", countryKo: "베트남", flag: "🇻🇳", lat: 10.8231, lon: 106.6297 },
+
+    // 🇰🇷 Hàn Quốc
+    { name: "Busan", country: "Hàn Quốc", countryKo: "대한민국", flag: "🇰🇷", lat: 35.1796, lon: 129.0756 },
+    { name: "Daegu", country: "Hàn Quốc", countryKo: "대한민국", flag: "🇰🇷", lat: 35.8714, lon: 128.6014 },
+    { name: "Incheon", country: "Hàn Quốc", countryKo: "대한민국", flag: "🇰🇷", lat: 37.4563, lon: 126.7052 },
+    { name: "Jeju", country: "Hàn Quốc", countryKo: "대한민국", flag: "🇰🇷", lat: 33.4996, lon: 126.5312 },
+    { name: "Seoul", country: "Hàn Quốc", countryKo: "대한민국", flag: "🇰🇷", lat: 37.5665, lon: 126.978 },
+
+    // 🇯🇵 Nhật Bản
+    { name: "Kyoto", country: "Nhật Bản", countryKo: "일본", flag: "🇯🇵", lat: 35.0116, lon: 135.7681 },
+    { name: "Osaka", country: "Nhật Bản", countryKo: "일본", flag: "🇯🇵", lat: 34.6937, lon: 135.5023 },
+    { name: "Sapporo", country: "Nhật Bản", countryKo: "일본", flag: "🇯🇵", lat: 43.0618, lon: 141.3545 },
+    { name: "Tokyo", country: "Nhật Bản", countryKo: "일본", flag: "🇯🇵", lat: 35.6762, lon: 139.6503 },
+
+    // 🇹🇭 Thái Lan
+    { name: "Bangkok", country: "Thái Lan", countryKo: "태국", flag: "🇹🇭", lat: 13.7563, lon: 100.5018 },
+    { name: "Chiang Mai", country: "Thái Lan", countryKo: "태국", flag: "🇹🇭", lat: 18.7883, lon: 98.9853 },
+    { name: "Phuket", country: "Thái Lan", countryKo: "태국", flag: "🇹🇭", lat: 7.8804, lon: 98.3923 },
+
+    // 🇸🇬 Singapore
+    { name: "Singapore", country: "Singapore", countryKo: "싱가포르", flag: "🇸🇬", lat: 1.3521, lon: 103.8198 },
+
+    // 🇲🇾 Malaysia
+    { name: "Kuala Lumpur", country: "Malaysia", countryKo: "말레이시아", flag: "🇲🇾", lat: 3.139, lon: 101.6869 },
+    { name: "Penang", country: "Malaysia", countryKo: "말레이시아", flag: "🇲🇾", lat: 5.4164, lon: 100.3327 },
+
+    // 🇮🇩 Indonesia
+    { name: "Bali", country: "Indonesia", countryKo: "인도네시아", flag: "🇮🇩", lat: -8.3405, lon: 115.092 },
+    { name: "Jakarta", country: "Indonesia", countryKo: "인도네시아", flag: "🇮🇩", lat: -6.2088, lon: 106.8456 },
+
+    // 🇫🇷 Pháp
+    { name: "Nice", country: "Pháp", countryKo: "프랑스", flag: "🇫🇷", lat: 43.7102, lon: 7.262 },
+    { name: "Paris", country: "Pháp", countryKo: "프랑스", flag: "🇫🇷", lat: 48.8566, lon: 2.3522 },
+
+    // 🇮🇹 Ý
+    { name: "Florence", country: "Ý", countryKo: "이탈리아", flag: "🇮🇹", lat: 43.7696, lon: 11.2558 },
+    { name: "Rome", country: "Ý", countryKo: "이탈리아", flag: "🇮🇹", lat: 41.9028, lon: 12.4964 },
+    { name: "Venice", country: "Ý", countryKo: "이탈리아", flag: "🇮🇹", lat: 45.4408, lon: 12.3155 },
+
+    // 🇺🇸 Mỹ
+    { name: "Los Angeles", country: "Hoa Kỳ", countryKo: "미국", flag: "🇺🇸", lat: 34.0522, lon: -118.2437 },
+    { name: "New York", country: "Hoa Kỳ", countryKo: "미국", flag: "🇺🇸", lat: 40.7128, lon: -74.006 },
+    { name: "San Francisco", country: "Hoa Kỳ", countryKo: "미국", flag: "🇺🇸", lat: 37.7749, lon: -122.4194 },
+
+    // 🇦🇺 Úc
+    { name: "Melbourne", country: "Úc", countryKo: "호주", flag: "🇦🇺", lat: -37.8136, lon: 144.9631 },
+    { name: "Sydney", country: "Úc", countryKo: "호주", flag: "🇦🇺", lat: -33.8688, lon: 151.2093 },
+  ];
+
+  /* Gợi ý lịch trình 5 ngày / thành phố (vi + ko). Mỗi ngày: sáng · trưa · chiều · tối */
+  const PLANS = {
+    "Hà Nội": {
+      vi: [
+        ["Sáng: Hồ Hoàn Kiếm + phố cổ", "Trưa: Phở / bún chả", "Chiều: Văn Miếu Quốc Tử Giám", "Tối: Chợ đêm Đồng Xuân"],
+        ["Sáng: Lăng Bác + Chùa Một Cột", "Trưa: Bun thang / cơm", "Chiều: Bảo tàng Dân tộc học", "Tối: Cà phê trứng"],
+        ["Sáng: Train Street + Nhà thờ lớn", "Trưa: Bánh mì / bún đậu", "Chiều: West Lake dạo xe", "Tối: Nhạc sống phố cổ"],
+        ["Sáng: Day trip Ninh Bình / Tam Cốc", "Trưa: Cơm nhà hàng ven sông", "Chiều: Hang Múa / Tràng An", "Tối: Về Hà Nội nghỉ"],
+        ["Sáng: Shopping Hàng Mã / Vincom", "Trưa: Ăn vặt cuối chuyến", "Chiều: Cafe view đẹp chụp ảnh", "Tối: Tổng kết + quà lưu niệm"],
+      ],
+      ko: [
+        ["오전: 호안끼엠 호수 + 올드타운", "점심: 쌀국수 / 분짜", "오후: 문묘", "저녁: 동쑤언 야시장"],
+        ["오전: 호찌민 묘소 + 한기둥 사원", "점심: 분탕 / 식사", "오후: 민족학 박물관", "저녁: 계란 커피"],
+        ["오전: 기차길 + 대성당", "점심: 반미 / 분도우", "오후: 웨스트레이크 자전거", "저녁: 올드타운 라이브"],
+        ["오전: 닌빈 / 탐콕 당일투어", "점심: 강변 식당", "오후: 항무아 / 짱안", "저녁: 하노이 복귀"],
+        ["오전: 쇼핑", "점심: 길거리 간식", "오후: 뷰 카페 사진", "저녁: 기념품 + 정리"],
+      ],
+    },
+    "TP. Hồ Chí Minh": {
+      vi: [
+        ["Sáng: Nhà thờ Đức Bà + Bưu điện", "Trưa: Cơm tấm / bánh mì", "Chiều: Dinh Độc Lập", "Tối: Phố đi bộ Nguyễn Huệ"],
+        ["Sáng: Chợ Bến Thành", "Trưa: Ẩm thực quận 1", "Chiều: Bảo tàng Chứng tích chiến tranh", "Tối: Bitexco / Landmark 81 view"],
+        ["Sáng: Đường sách + cafe vintage", "Trưa: Hủ tiếu / bánh xèo", "Chiều: Thảo Cầm Viên hoặc shopping Q3", "Tối: Nhạc sống Bùi Viện"],
+        ["Sáng: Củ Chi hoặc Vũng Tàu day trip", "Trưa: Ăn nhẹ trên đường", "Chiều: Về thành phố nghỉ", "Tối: Quán rooftop"],
+        ["Sáng: Bảo tàng Mỹ thuật / Fine Arts", "Trưa: Ăn đặc sản lần cuối", "Chiều: Mua quà", "Tối: Tổng kết chuyến đi"],
+      ],
+      ko: [
+        ["오전: 노트르담 + 우체국", "점심: 콤탐 / 반미", "오후: 독립궁", "저녁: 응우옌후에 보행거리"],
+        ["오전: 벤타인 시장", "점심: 1군 먹거리", "오후: 전쟁증적박물관", "저녁: 전망 야경"],
+        ["오전: 책거리 + 카페", "점심: 후띠에우 / 반쎄오", "오후: 동물원 or 쇼핑", "저녁: 부이비엔"],
+        ["오전: 꾸찌 or 붕따우", "점심: 간단 식사", "오후: 시내 휴식", "저녁: 루프탑"],
+        ["오전: 미술관", "점심: 마지막 맛집", "오후: 기념품", "저녁: 여행 정리"],
+      ],
+    },
+    "Đà Nẵng": {
+      vi: [
+        ["Sáng: Cầu Rồng + sông Hàn", "Trưa: Mì Quảng", "Chiều: Bãi biển Mỹ Khê", "Tối: Xem cầu phun lửa"],
+        ["Sáng: Bán đảo Sơn Trà + Chùa Linh Ứng", "Trưa: Hải sản", "Chiều: Ngũ Hành Sơn", "Tối: Helio / Asia Park"],
+        ["Sáng: Day trip Hội An", "Trưa: Cao lầu", "Chiều: Phố cổ đèn lồng", "Tối: Thả hoa đăng"],
+        ["Sáng: Bà Nà Hills", "Trưa: Ăn trên núi", "Chiều: Cầu Vàng chụp ảnh", "Tối: Về Đà Nẵng nghỉ"],
+        ["Sáng: Tắm biển / spa", "Trưa: Bánh tráng cuốn thịt heo", "Chiều: Shopping / cafe", "Tối: Ăn tối view biển"],
+      ],
+      ko: [
+        ["오전: 용다리 + 한강", "점심: 미꽝", "오후: 미케 비치", "저녁: 용다리 쇼"],
+        ["오전: 선짜 + 린응사원", "점심: 해산물", "오후: 오행산", "저녁: 아시아파크"],
+        ["오전: 호이안 당일", "점심: 까우러우", "오후: 올드타운", "저녁: 등불 띄우기"],
+        ["오전: 바나힐", "점심: 산 위 식사", "오후: 황금다리 사진", "저녁: 다낭 복귀"],
+        ["오전: 해변 / 스파", "점심: 분짜식 롤", "오후: 쇼핑·카페", "저녁: 오션뷰 디너"],
+      ],
+    },
+    "Đà Lạt": {
+      vi: [
+        ["Sáng: Hồ Xuân Hương dạo bộ", "Trưa: Bánh căn / bánh ướt lòng gà", "Chiều: Quảng trường Lâm Viên", "Tối: Chợ đêm Đà Lạt"],
+        ["Sáng: Crazy House + Cafe đồi", "Trưa: Lẩu gà lá é", "Chiều: Đồi chè Cầu Đất", "Tối: Săn mây (nếu có)"],
+        ["Sáng: Thác Datanla / Maze", "Trưa: Picnic nhẹ", "Chiều: Ga Đà Lạt + nhà thờ Domain", "Tối: Ẩm thực đường phố"],
+        ["Sáng: Langbiang hoặc Valley of Love", "Trưa: Sữa đậu nành nóng", "Chiều: Vườn hoa / nông trại", "Tối: Cafe acoustic"],
+        ["Sáng: Mua đặc sản (ô mai, rượu vang)", "Trưa: Bánh tráng nướng", "Chiều: Check-in cuối", "Tối: Nghỉ sớm"],
+      ],
+      ko: [
+        ["오전: 수언흐엉 호수", "점심: 반깐 / 반웻", "오후: 람비엔 광장", "저녁: 야시장"],
+        ["오전: 크레이지하우스 + 카페", "점심: 닭 dualé", "오후: 까우닷 차밭", "저녁: 구름 사냥"],
+        ["오전: 다탄라 폭포", "점심: 피크닉", "오후: 달랏역 + 성당", "저녁: 스트리트푸드"],
+        ["오전: 랑비앙 / 사랑의 계곡", "점심: 두유", "오후: 꽃밭·농장", "저녁: 어쿠스틱 카페"],
+        ["오전: 특산품 쇼핑", "점심: 반짱 구이", "오후: 마지막 포토", "저녁: 휴식"],
+      ],
+    },
+    "Hội An": {
+      vi: [
+        ["Sáng: Phố cổ đi bộ", "Trưa: Cao lầu / mì Quảng", "Chiều: Chùa Cầu + hội quán", "Tối: Đèn lồng sông Hoài"],
+        ["Sáng: Làng rau Trà Quế", "Trưa: Workshop nấu ăn", "Chiều: Bãi biển An Bàng", "Tối: Ẩm thực phố cổ"],
+        ["Sáng: Rừng dừa Bảy Mẫu / thuyền thúng", "Trưa: Hải sản", "Chiều: May áo dài", "Tối: Cafe view sông"],
+        ["Sáng: Thánh địa Mỹ Sơn", "Trưa: Ăn nhẹ", "Chiều: Về Hội An nghỉ", "Tối: Thả hoa đăng"],
+        ["Sáng: Mua quà đèn lồng", "Trưa: Bánh mì Phượng", "Chiều: Chụp ảnh cuối", "Tối: Tạm biệt phố cổ"],
+      ],
+      ko: [
+        ["오전: 올드타운 산책", "점심: 까우러우 / 미꽝", "오후: 내원교", "저녁: 등불 야경"],
+        ["오전: 짜꾸에 채소마을", "점심: 쿠킹클래스", "오후: 안방 비치", "저녁: 올드타운 맛집"],
+        ["오전: 코코넛숲 배", "점심: 해산물", "오후: 아오자이 맞춤", "저녁: 강뷰 카페"],
+        ["오전: 미선 유적", "점심: 간단 식사", "오후: 휴식", "저녁: 등불 띄우기"],
+        ["오전: 기념품", "점심: 반미", "오후: 마지막 사진", "저녁: 작별"],
+      ],
+    },
+    "Huế": {
+      vi: [
+        ["Sáng: Đại Nội Huế", "Trưa: Bún bò Huế", "Chiều: Cung điện / lăng tẩm khu vực", "Tối: Thuyền sông Hương"],
+        ["Sáng: Chùa Thiên Mụ", "Trưa: Cơm hến", "Chiều: Lăng Khải Định / Minh Mạng", "Tối: Cafe cố đô"],
+        ["Sáng: Đồi Vọng Cảnh", "Trưa: Bánh khoái", "Chiều: Chợ Đông Ba", "Tối: Nhạc cung đình (nếu có)"],
+        ["Sáng: Biển Lăng Cô / ngày nghỉ", "Trưa: Hải sản", "Chiều: Về phố nghỉ", "Tối: Ẩm thực đường phố"],
+        ["Sáng: Mua nón / đặc sản", "Trưa: Ăn lần cuối", "Chiều: Ảnh check-in", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 후에 황성", "점심: 분보후에", "오후: 왕궁 구역", "저녁: 흐엉강 보트"],
+        ["오전: 티엔무 사원", "점심: 껌헨", "오후: 카이딘·민망 릉", "저녁: 카페"],
+        ["오전: 봉까인 언덕", "점심: 반콰이", "오후: 동바 시장", "저녁: 궁중 음악"],
+        ["오전: 랑꼬 해변", "점심: 해산물", "오후: 휴식", "저녁: 스트리트푸드"],
+        ["오전: 기념품", "점심: 마지막 식사", "오후: 포토", "저녁: 정리"],
+      ],
+    },
+    "Nha Trang": {
+      vi: [
+        ["Sáng: Tháp Bà Ponagar", "Trưa: Bún sứa / hải sản", "Chiều: Biển Trần Phú", "Tối: Quảng trường / chợ đêm"],
+        ["Sáng: Tour 4 đảo", "Trưa: BBQ trên đảo", "Chiều: Lặn / snorkeling", "Tối: Về đất liền nghỉ"],
+        ["Sáng: Viện Hải dương học", "Trưa: Nem nướng", "Chiều: VinWonders / tắm bùn", "Tối: Ăn tối view biển"],
+        ["Sáng: Nhà thờ đá / chùa Long Sơn", "Trưa: Bánh căn", "Chiều: Cafe / spa", "Tối: Skylight / rooftop"],
+        ["Sáng: Mua khô / đặc sản", "Trưa: Ăn hải sản cuối", "Chiều: Tắm biển nhẹ", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 포나가르 타워", "점심: 해산물", "오후: 해변", "저녁: 야시장"],
+        ["오전: 4섬 투어", "점심: 섬 BBQ", "오후: 스노클링", "저녁: 휴식"],
+        ["오전: 해양연구소", "점심: 넴느엉", "오후: 빈원더스 / 머드스파", "저녁: 오션뷰"],
+        ["오전: 성당·롱선사", "점심: 반깐", "오후: 카페·스파", "저녁: 루프탑"],
+        ["오전: 특산품", "점심: 해산물", "오후: 해변", "저녁: 정리"],
+      ],
+    },
+    "Phú Quốc": {
+      vi: [
+        ["Sáng: Grand World / Sunset Town", "Trưa: Hải sản", "Chiều: Bãi Sao", "Tối: Sunset Sanato"],
+        ["Sáng: Câu cá / lặn ngắm san hô", "Trưa: BBQ thuyền", "Chiều: Nghỉ biển", "Tối: Chợ đêm Dinh Cậu"],
+        ["Sáng: VinWonders / Safari", "Trưa: Ăn trong công viên", "Chiều: Công viên nước", "Tối: Show nhạc nước"],
+        ["Sáng: Nhà tù Phú Quốc + cơ sở nước mắm", "Trưa: Bún quậy", "Chiều: Suối Tranh", "Tối: Cafe view biển"],
+        ["Sáng: Mua tiêu / ngọc trai", "Trưa: Ăn cuối", "Chiều: Check-out thư thái", "Tối: Bay về (nếu có)"],
+      ],
+      ko: [
+        ["오전: 그랜드월드", "점심: 해산물", "오후: 바이싸오", "저녁: 선셋"],
+        ["오전: 낚시·스노클링", "점심: 보트 BBQ", "오후: 비치", "저녁: 야시장"],
+        ["오전: 빈원더스", "점심: 파크 식사", "오후: 워터파크", "저녁: 쇼"],
+        ["오전: 감옥 유적 + 피시소스", "점심: 분꽈이", "오후: 수이짜인", "저녁: 카페"],
+        ["오전: 기념품", "점심: 마지막 식사", "오후: 여유", "저녁: 출국 준비"],
+      ],
+    },
+    "Hạ Long": {
+      vi: [
+        ["Sáng: Check-in cảng + lên cruise", "Trưa: Buffet tàu", "Chiều: Kayak / hang động", "Tối: BBQ trên tàu"],
+        ["Sáng: Tai Chi trên boong", "Trưa: Ăn trưa tàu", "Chiều: Về đất liền / bảo tàng Quảng Ninh", "Tối: Chợ đêm Hạ Long"],
+        ["Sáng: Sun World Hạ Long", "Trưa: Ăn trong công viên", "Chiều: Cáp treo Nữ Hoàng", "Tối: View vịnh"],
+        ["Sáng: Bãi Cháy dạo biển", "Trưa: Hải sản tươi", "Chiều: Cafe / nghỉ", "Tối: Ẩm thực đường phố"],
+        ["Sáng: Mua đặc sản", "Trưa: Ăn nhẹ", "Chiều: Ảnh cuối vịnh", "Tối: Về Hà Nội / sân bay"],
+      ],
+      ko: [
+        ["오전: 선착장 + 크루즈", "점심: 선상 뷔페", "오후: 카약·동굴", "저녁: 선상 BBQ"],
+        ["오전: 갑판 타이치", "점심: 선상 식사", "오후: 박물관", "저녁: 야시장"],
+        ["오전: 썬월드", "점심: 파크 식사", "오후: 케이블카", "저녁: 만 전망"],
+        ["오전: 바이짜이 해변", "점심: 해산물", "오후: 휴식", "저녁: 스트리트푸드"],
+        ["오전: 기념품", "점심: 간단 식사", "오후: 마지막 사진", "저녁: 이동"],
+      ],
+    },
+    "Seoul": {
+      vi: [
+        ["Sáng: Gyeongbokgung + Hanbok", "Trưa: Bibimbap / kimbap", "Chiều: Bukchon + Insadong", "Tối: Myeongdong mua sắm"],
+        ["Sáng: N Seoul Tower", "Trưa: Korean fried chicken", "Chiều: Hongdae dạo phố", "Tối: Hangang picnic / cafe"],
+        ["Sáng: Gangnam + COEX", "Trưa: Street food", "Chiều: Starfield Library + shopping", "Tối: Banpo Rainbow Fountain"],
+        ["Sáng: Day trip DMZ hoặc Nami", "Trưa: Ăn trên đường", "Chiều: Về Seoul nghỉ", "Tối: Night market"],
+        ["Sáng: Lotte World / museum", "Trưa: Hotteok / tteokbokki", "Chiều: Mua quà Olive Young", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 경복궁 + 한복", "점심: 비빔밥 / 김밥", "오후: 북촌 + 인사동", "저녁: 명동 쇼핑"],
+        ["오전: N서울타워", "점심: 치킨", "오후: 홍대", "저녁: 한강 피크닉"],
+        ["오전: 강남 + 코엑스", "점심: 길거리 음식", "오후: 별마당 도서관", "저녁: 반포 분수"],
+        ["오전: DMZ or 남이섬", "점심: 이동 중 식사", "오후: 휴식", "저녁: 야시장"],
+        ["오전: 롯데월드 / 박물관", "점심: 호떡·떡볶이", "오후: 기념품", "저녁: 정리"],
+      ],
+    },
+    "Busan": {
+      vi: [
+        ["Sáng: Gamcheon Culture Village", "Trưa: Milmyeon", "Chiều: Jagalchi Market", "Tối: Gwangalli bridge view"],
+        ["Sáng: Haeundae Beach", "Trưa: Seafood", "Chiều: Dongbaek Island / CAPE", "Tối: BIFF square"],
+        ["Sáng: Haedong Yonggungsa", "Trưa: Ăn gần chùa", "Chiều: Songdo skywalk", "Tối: Spa land / jjimjilbang"],
+        ["Sáng: Taejongdae", "Trưa: Picnic", "Chiều: Shopping Seomyeon", "Tối: Cafe night"],
+        ["Sáng: UN Memorial / museum", "Trưa: Hotteok", "Chiều: Mua quà", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 감천문화마을", "점심: 밀면", "오후: 자갈치시장", "저녁: 광안대교"],
+        ["오전: 해운대", "점심: 해산물", "오후: 동백섬", "저녁: BIFF 거리"],
+        ["오전: 해동용궁사", "점심: 근처 식사", "오후: 송도 스카이워크", "저녁: 찜질방"],
+        ["오전: 태종대", "점심: 피크닉", "오후: 서면 쇼핑", "저녁: 카페"],
+        ["오전: 박물관", "점심: 호떡", "오후: 기념품", "저녁: 정리"],
+      ],
+    },
+    "Jeju": {
+      vi: [
+        ["Sáng: Sàn bay → trung tâm", "Trưa: Black pork", "Chiều: Dongmun market", "Tối: Nghỉ sớm"],
+        ["Sáng: Seongsan Ilchulbong", "Trưa: Haenyeo seafood", "Chiều: Seopjikoji", "Tối: Cafe Aewol"],
+        ["Sáng: Hallasan trail nhẹ / forest", "Trưa: Picnic", "Chiều: Tea museum / green tea field", "Tối: Jjimjilbang"],
+        ["Sáng: Jungmun beach + Jusangjeolli", "Trưa: Ăn gần biển", "Chiều: Teddy Bear / aquarium", "Tối: Sunset"],
+        ["Sáng: Mua hallabong / chocolate", "Trưa: Ăn cuối", "Chiều: Airport", "Tối: Bay về"],
+      ],
+      ko: [
+        ["오전: 공항 → 시내", "점심: 흑돼지", "오후: 동문시장", "저녁: 휴식"],
+        ["오전: 성산일출봉", "점심: 해녀 해산물", "오후: 섭지코지", "저녁: 애월 카페"],
+        ["오전: 한라산·숲길", "점심: 피크닉", "오후: 녹차밭", "저녁: 찜질방"],
+        ["오전: 중문 + 주상절리", "점심: 해변 식사", "오후: 아쿠아리움", "저녁: 선셋"],
+        ["오전: 기념품", "점심: 마지막 식사", "오후: 공항", "저녁: 귀국"],
+      ],
+    },
+    "Daegu": {
+      vi: [
+        ["Sáng: Dongseong-ro shopping", "Trưa: Tteokgalbi", "Chiều: Seomun Market", "Tối: Cafe street"],
+        ["Sáng: Apsan cable car", "Trưa: Picnic", "Chiều: Kim Gwangseok street", "Tối: Night market"],
+        ["Sáng: Palgongsan / temple", "Trưa: Temple food / local", "Chiều: Museum", "Tối: Hot pot"],
+        ["Sáng: Day trip Gyeongju", "Trưa: Ăn Gyeongju", "Chiều: Bulguksa / Cheomseongdae", "Tối: Về Daegu"],
+        ["Sáng: Mua quà", "Trưa: Street food", "Chiều: Cafe cuối", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 동성로", "점심: 떡갈비", "오후: 서문시장", "저녁: 카페거리"],
+        ["오전: 앞산 케이블카", "점심: 피크닉", "오후: 김광석길", "저녁: 야시장"],
+        ["오전: 팔공산·사찰", "점심: 사찰/로컬", "오후: 박물관", "저녁: 전골"],
+        ["오전: 경주 당일", "점심: 경주 식사", "오후: 불국사·첨성대", "저녁: 대구 복귀"],
+        ["오전: 기념품", "점심: 길거리 음식", "오후: 카페", "저녁: 정리"],
+      ],
+    },
+    "Incheon": {
+      vi: [
+        ["Sáng: Chinatown + Jayu Park", "Trưa: Jajangmyeon", "Chiều: Songdo Central Park", "Tối: Tri-bowl / cafe"],
+        ["Sáng: Wolmido", "Trưa: Seafood", "Chiều: Incheon Grand Park", "Tối: Open port night"],
+        ["Sáng: Ganghwa island nhẹ", "Trưa: Ăn địa phương", "Chiều: Về Songdo nghỉ", "Tối: Shopping"],
+        ["Sáng: Airport museum / spa", "Trưa: Food court", "Chiều: Cafe view", "Tối: Chuẩn bị bay"],
+        ["Sáng: Mua quà duty-free", "Trưa: Ăn nhẹ", "Chiều: Airport", "Tối: Bay"],
+      ],
+      ko: [
+        ["오전: 차이나타운 + 자유공원", "점심: 짜장면", "오후: 송도 센트럴파크", "저녁: 카페"],
+        ["오전: 월미도", "점심: 해산물", "오후: 인천대공원", "저녁: 개항장"],
+        ["오전: 강화도", "점심: 로컬 식사", "오후: 휴식", "저녁: 쇼핑"],
+        ["오전: 공항 스파·뮤지엄", "점심: 푸드코트", "오후: 카페", "저녁: 출국 준비"],
+        ["오전: 면세점", "점심: 간단 식사", "오후: 공항", "저녁: 비행"],
+      ],
+    },
+    "Tokyo": {
+      vi: [
+        ["Sáng: Senso-ji Asakusa", "Trưa: Tempura / ramen", "Chiều: Skytree hoặc Ueno", "Tối: Akihabara"],
+        ["Sáng: Meiji Shrine + Harajuku", "Trưa: Crepe Takeshita", "Chiều: Shibuya scramble", "Tối: Shinjuku night"],
+        ["Sáng: TeamLab / museum", "Trưa: Conveyor sushi", "Chiều: Ginza / Imperial garden", "Tối: Odaiba"],
+        ["Sáng: Day trip Kamakura / Nikko", "Trưa: Ăn địa phương", "Chiều: Về Tokyo", "Tối: Izakaya"],
+        ["Sáng: Shopping Don Quijote", "Trưa: Tonkatsu", "Chiều: Park yên tĩnh", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 아사쿠사 센소지", "점심: 텐푸라 / 라멘", "오후: 스카이트리·우에노", "저녁: 아키하바라"],
+        ["오전: 메이지신궁 + 하라주쿠", "점심: 크레페", "오후: 시부야", "저녁: 신주쿠"],
+        ["오전: 팀랩 / 박물관", "점심: 회전초밥", "오후: 긴자", "저녁: 오다이바"],
+        ["오전: 가마쿠라 / 닛코", "점심: 로컬", "오후: 복귀", "저녁: 이자카야"],
+        ["오전: 돈키호테", "점심: 돈카츠", "오후: 공원", "저녁: 정리"],
+      ],
+    },
+    "Osaka": {
+      vi: [
+        ["Sáng: Osaka Castle", "Trưa: Okonomiyaki", "Chiều: Shinsekai", "Tối: Dotonbori neon"],
+        ["Sáng: Kuromon Market", "Trưa: Street food", "Chiều: Umeda Sky Building", "Tối: Karaoke"],
+        ["Sáng: Universal Studios (nếu budget cao) hoặc aquarium", "Trưa: Ăn trong park", "Chiều: Tiếp tục vui chơi", "Tối: Nghỉ"],
+        ["Sáng: Day trip Kyoto", "Trưa: Kyoto lunch", "Chiều: Fushimi / Gion", "Tối: Về Osaka"],
+        ["Sáng: Shopping Shinsaibashi", "Trưa: Takoyaki", "Chiều: Cafe", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 오사카성", "점심: 오코노미야키", "오후: 신세카이", "저녁: 도톤보리"],
+        ["오전: 쿠로몬 시장", "점심: 스트리트푸드", "오후: 우메다 스카이", "저녁: 노래방"],
+        ["오전: USJ or 아쿠아리움", "점심: 파크 식사", "오후: 계속 즐기기", "저녁: 휴식"],
+        ["오전: 교토 당일", "점심: 교토", "오후: 후시미·기온", "저녁: 오사카 복귀"],
+        ["오전: 신사이바시", "점심: 타코야키", "오후: 카페", "저녁: 정리"],
+      ],
+    },
+    "Kyoto": {
+      vi: [
+        ["Sáng: Fushimi Inari", "Trưa: Matcha sweets", "Chiều: Gion + Yasaka", "Tối: Pontocho"],
+        ["Sáng: Kinkaku-ji", "Trưa: Tofu / vegetarian", "Chiều: Arashiyama bamboo", "Tối: Onsen / cafe"],
+        ["Sáng: Kiyomizu-dera", "Trưa: Nishiki Market", "Chiều: Philosopher’s Path", "Tối: Tea house"],
+        ["Sáng: Nara day trip", "Trưa: Ăn Nara", "Chiều: Deer park", "Tối: Về Kyoto"],
+        ["Sáng: Mua matcha / yukata", "Trưa: Ramen", "Chiều: Temple cuối", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 후시미 이나리", "점심: 말차 디저트", "오후: 기온", "저녁: 폰토초"],
+        ["오전: 금각사", "점심: 두부 요리", "오후: 아라시야마", "저녁: 온천·카페"],
+        ["오전: 기요미즈데라", "점심: 니시키 시장", "오후: 철학의 길", "저녁: 찻집"],
+        ["오전: 나라 당일", "점심: 나라", "오후: 사슴공원", "저녁: 교토 복귀"],
+        ["오전: 기념품", "점심: 라멘", "오후: 마지막 사찰", "저녁: 정리"],
+      ],
+    },
+    "Sapporo": {
+      vi: [
+        ["Sáng: Odori Park", "Trưa: Soup curry / miso ramen", "Chiều: Clock Tower + TV Tower", "Tối: Susukino"],
+        ["Sáng: Sapporo Beer Museum", "Trưa: Genghis Khan BBQ", "Chiều: Moerenuma / art park", "Tối: Jigger / cafe"],
+        ["Sáng: Day trip Otaru", "Trưa: Fresh sushi", "Chiều: Canal + music box", "Tối: Về Sapporo"],
+        ["Sáng: Hokkaido Shrine", "Trưa: Dairy sweets", "Chiều: Shopping Tanukikoji", "Tối: Jingisukan"],
+        ["Sáng: Mua corn chocolate", "Trưa: Ăn cuối", "Chiều: Airport", "Tối: Bay"],
+      ],
+      ko: [
+        ["오전: 오도리 공원", "점심: 수프커리 / 미소라멘", "오후: 시계탑", "저녁: 스스키노"],
+        ["오전: 맥주박물관", "점심: 징기스칸", "오후: 모에레누마", "저녁: 카페"],
+        ["오전: 오타루", "점심: 초밥", "오후: 운하", "저녁: 삿포로 복귀"],
+        ["오전: 홋카이도신궁", "점심: 디저트", "오후: 타누키코지", "저녁: 징기스칸"],
+        ["오전: 기념품", "점심: 마지막 식사", "오후: 공항", "저녁: 비행"],
+      ],
+    },
+    "Bangkok": {
+      vi: [
+        ["Sáng: Grand Palace + Wat Pho", "Trưa: Pad Thai", "Chiều: Wat Arun", "Tối: Chao Phraya dinner cruise"],
+        ["Sáng: Chatuchak (cuối tuần) / MBK", "Trưa: Street food", "Chiều: Jim Thompson House", "Tối: Rooftop bar"],
+        ["Sáng: Floating market day trip", "Trưa: Ăn chợ nổi", "Chiều: Về thành phố", "Tối: Khao San / Asok"],
+        ["Sáng: ICONSIAM + museum", "Trưa: Mango sticky rice", "Chiều: Mall shopping", "Tối: Night market"],
+        ["Sáng: Spa / massage", "Trưa: Ăn cuối", "Chiều: Mua quà", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 왕궁 + 왓포", "점심: 팟타이", "오후: 왓아룬", "저녁: 차오프라야 크루즈"],
+        ["오전: 짜뚜짝 / MBK", "점심: 스트리트푸드", "오후: 짐톰슨 하우스", "저녁: 루프탑"],
+        ["오전: 수상시장", "점심: 시장 식사", "오후: 복귀", "저녁: 카오산"],
+        ["오전: 아이콘시암", "점심: 망고스티키라이스", "오후: 쇼핑몰", "저녁: 야시장"],
+        ["오전: 스파", "점심: 마지막 식사", "오후: 기념품", "저녁: 정리"],
+      ],
+    },
+    "Chiang Mai": {
+      vi: [
+        ["Sáng: Doi Suthep", "Trưa: Khao soi", "Chiều: Old City temples", "Tối: Night Bazaar"],
+        ["Sáng: Elephant sanctuary (ethical)", "Trưa: Picnic", "Chiều: Về thành phố nghỉ", "Tối: Sunday Walking Street"],
+        ["Sáng: Cooking class", "Trưa: Ăn món tự nấu", "Chiều: Nimman cafe hop", "Tối: Live music"],
+        ["Sáng: Doi Inthanon nhẹ", "Trưa: Ăn trên núi", "Chiều: Waterfall", "Tối: Massage"],
+        ["Sáng: Mua trà / handmade", "Trưa: Ăn cuối", "Chiều: Cafe", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 도이수텝", "점심: 카오소이", "오후: 올드시티 사원", "저녁: 나이트바자"],
+        ["오전: 코끼리 생츄어리", "점심: 피크닉", "오후: 휴식", "저녁: 워킹스트리트"],
+        ["오전: 쿠킹클래스", "점심: 직접 만든 음식", "오후: 니만 카페", "저녁: 라이브"],
+        ["오전: 도이인타논", "점심: 산 식사", "오후: 폭포", "저녁: 마사지"],
+        ["오전: 기념품", "점심: 마지막 식사", "오후: 카페", "저녁: 정리"],
+      ],
+    },
+    "Phuket": {
+      vi: [
+        ["Sáng: Old Phuket Town", "Trưa: Seafood", "Chiều: Patong / Kata beach", "Tối: Bangla night (nếu thích)"],
+        ["Sáng: Island hopping Phi Phi / James Bond", "Trưa: BBQ thuyền", "Chiều: Snorkel", "Tối: Về nghỉ"],
+        ["Sáng: Big Buddha", "Trưa: Thai lunch", "Chiều: Promthep Cape sunset", "Tối: Night market"],
+        ["Sáng: Spa + beach club nhẹ", "Trưa: Smoothie bowl", "Chiều: Shopping Jungceylon", "Tối: Dinner view"],
+        ["Sáng: Mua quà", "Trưa: Ăn cuối", "Chiều: Airport", "Tối: Bay"],
+      ],
+      ko: [
+        ["오전: 올드타운", "점심: 해산물", "오후: 해변", "저녁: 방글라"],
+        ["오전: 섬 투어", "점심: 보트 BBQ", "오후: 스노클링", "저녁: 휴식"],
+        ["오전: 빅부처", "점심: 태국 식사", "오후: 프롬텝 선셋", "저녁: 야시장"],
+        ["오전: 스파·비치", "점심: 스무디볼", "오후: 쇼핑", "저녁: 뷰 디너"],
+        ["오전: 기념품", "점심: 마지막 식사", "오후: 공항", "저녁: 비행"],
+      ],
+    },
+    "Singapore": {
+      vi: [
+        ["Sáng: Gardens by the Bay", "Trưa: Hawker center", "Chiều: Marina Bay Sands photo", "Tối: Spectra show"],
+        ["Sáng: Chinatown + Buddha Tooth", "Trưa: Chicken rice", "Chiều: Little India", "Tối: Clarke Quay"],
+        ["Sáng: Sentosa / Universal", "Trưa: Ăn trong đảo", "Chiều: Beach / aquarium", "Tối: Wings of Time"],
+        ["Sáng: Orchard shopping", "Trưa: Food court", "Chiều: Botanic Gardens", "Tối: Night safari (nếu budget)"],
+        ["Sáng: Mua quà Mustafa / mall", "Trưa: Chili crab (chia sẻ)", "Chiều: Cafe", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 가든스바이더베이", "점심: 호커센터", "오후: 마리나베이", "저녁: 스펙트라"],
+        ["오전: 차이나타운", "점심: 치킨라이스", "오후: 리틀인디아", "저녁: 클라크키"],
+        ["오전: 센토사", "점심: 섬 식사", "오후: 해변·아쿠아리움", "저녁: 윙스오브타임"],
+        ["오전: 오차드 쇼핑", "점심: 푸드코트", "오후: 식물원", "저녁: 나이트사파리"],
+        ["오전: 기념품", "점심: 칠리크랩", "오후: 카페", "저녁: 정리"],
+      ],
+    },
+    "Kuala Lumpur": {
+      vi: [
+        ["Sáng: Petronas Twin Towers photo", "Trưa: Nasi lemak", "Chiều: KLCC park + aquarium", "Tối: Bukit Bintang"],
+        ["Sáng: Batu Caves", "Trưa: Mamak food", "Chiều: Merdeka Square", "Tối: Jalan Alor"],
+        ["Sáng: Aquaria / museum", "Trưa: Satay", "Chiều: Chinatown Petaling", "Tối: Skybar view"],
+        ["Sáng: Day trip Genting / Putrajaya", "Trưa: Ăn nhẹ", "Chiều: Về KL", "Tối: Shopping Pavilion"],
+        ["Sáng: Mua quà", "Trưa: Ăn cuối", "Chiều: Cafe", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 페트로나스", "점심: 나시르막", "오후: KLCC 공원", "저녁: 부킷빈탕"],
+        ["오전: 바투케이브", "점심: 마막", "오후: 메르데카 광장", "저녁: 잘란알로르"],
+        ["오전: 아쿠아리움", "점심: 사테", "오후: 페탈링가", "저녁: 스카이바"],
+        ["오전: 겐팅 / 푸트라자야", "점심: 간단 식사", "오후: 복귀", "저녁: 쇼핑"],
+        ["오전: 기념품", "점심: 마지막 식사", "오후: 카페", "저녁: 정리"],
+      ],
+    },
+    "Penang": {
+      vi: [
+        ["Sáng: Georgetown street art", "Trưa: Char kway teow", "Chiều: Khoo Kongsi + clan jetties", "Tối: Night food"],
+        ["Sáng: Penang Hill", "Trưa: Ăn trên đồi", "Chiều: Kek Lok Si", "Tối: Gurney Drive"],
+        ["Sáng: Beach Batu Ferringhi", "Trưa: Seafood", "Chiều: Tropical spice garden", "Tối: Cafe"],
+        ["Sáng: Museum / fort", "Trưa: Assam laksa", "Chiều: Shopping", "Tối: Street food lần nữa"],
+        ["Sáng: Mua bánh / đặc sản", "Trưa: Ăn cuối", "Chiều: Ảnh cuối", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 조지타운 벽화", "점심: 차쿠에티오", "오후: 씨족사·선착장", "저녁: 야식"],
+        ["오전: 페낭힐", "점심: 언덕 식사", "오후: 극락사", "저녁: 거니드라이브"],
+        ["오전: 바투페링기 비치", "점심: 해산물", "오후: 스파이스가든", "저녁: 카페"],
+        ["오전: 박물관·요새", "점심: 아삼락사", "오후: 쇼핑", "저녁: 스트리트푸드"],
+        ["오전: 기념품", "점심: 마지막 식사", "오후: 포토", "저녁: 정리"],
+      ],
+    },
+    "Bali": {
+      vi: [
+        ["Sáng: Ubud Monkey Forest", "Trưa: Nasi campur", "Chiều: Tegalalang rice terrace", "Tối: Cafe Ubud"],
+        ["Sáng: Tirta Empul / temple", "Trưa: Smoothie bowl", "Chiều: Swing / waterfall", "Tối: Fire dance (nếu có)"],
+        ["Sáng: Seminyak beach", "Trưa: Seafood", "Chiều: Beach club", "Tối: Sunset Canggu"],
+        ["Sáng: Uluwatu temple", "Trưa: Ăn gần biển", "Chiều: Kecak dance", "Tối: Jimbaran seafood"],
+        ["Sáng: Spa + yoga", "Trưa: Ăn cuối", "Chiều: Mua quà", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 우붓 원숭이숲", "점심: 나시짬뿌르", "오후: 테갈랄랑", "저녁: 우붓 카페"],
+        ["오전: 사원", "점심: 스무디볼", "오후: 스윙·폭포", "저녁: 파이어댄스"],
+        ["오전: 스미냑 비치", "점심: 해산물", "오후: 비치클럽", "저녁: 창구 선셋"],
+        ["오전: 울루와뚜", "점심: 해변 식사", "오후: 케착댄스", "저녁: 짐바란"],
+        ["오전: 스파·요가", "점심: 마지막 식사", "오후: 기념품", "저녁: 정리"],
+      ],
+    },
+    "Jakarta": {
+      vi: [
+        ["Sáng: Monas + National Museum", "Trưa: Nasi goreng", "Chiều: Kota Tua", "Tối: Grand Indonesia"],
+        ["Sáng: Istiqlal + Cathedral", "Trưa: Street food", "Chiều: Ancol / museum", "Tối: Rooftop"],
+        ["Sáng: Day trip Bogor / Taman Mini", "Trưa: Ăn nhẹ", "Chiều: Về Jakarta", "Tối: Night market"],
+        ["Sáng: Shopping mall culture", "Trưa: Padang food", "Chiều: Cafe district", "Tối: Live music"],
+        ["Sáng: Mua quà", "Trưa: Ăn cuối", "Chiều: Nghỉ", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 모나스 + 박물관", "점심: 나시고렝", "오후: 코타투아", "저녁: 쇼핑몰"],
+        ["오전: 이스티크랄", "점심: 스트리트푸드", "오후: 안콜", "저녁: 루프탑"],
+        ["오전: 보고르 / 타만미니", "점심: 간단 식사", "오후: 복귀", "저녁: 야시장"],
+        ["오전: 몰 문화", "점심: 파당 음식", "오후: 카페", "저녁: 라이브"],
+        ["오전: 기념품", "점심: 마지막 식사", "오후: 휴식", "저녁: 정리"],
+      ],
+    },
+    "Paris": {
+      vi: [
+        ["Sáng: Tour Eiffel photo", "Trưa: Croissant + cafe", "Chiều: Seine walk + Louvre (ngoài hoặc vào)", "Tối: Trocadéro sunset"],
+        ["Sáng: Notre-Dame khu vực + Île", "Trưa: Crêpe", "Chiều: Montmartre + Sacré-Cœur", "Tối: Moulin khu vực dạo"],
+        ["Sáng: Versailles day trip", "Trưa: Picnic vườn", "Chiều: Cung điện", "Tối: Về Paris"],
+        ["Sáng: Musée d’Orsay / Centre Pompidou", "Trưa: Bistro", "Chiều: Le Marais shopping", "Tối: Seine cruise"],
+        ["Sáng: Mua souvenir", "Trưa: Macaron", "Chiều: Park nghỉ", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 에펠탑", "점심: 크루아상", "오후: 세느·루브르", "저녁: 트로카데로 선셋"],
+        ["오전: 노트르담 일대", "점심: 크레페", "오후: 몽마르트", "저녁: 산책"],
+        ["오전: 베르사유", "점심: 피크닉", "오후: 궁전", "저녁: 파리 복귀"],
+        ["오전: 오르세 / 퐁피두", "점심: 비스트로", "오후: 마레 쇼핑", "저녁: 세느 크루즈"],
+        ["오전: 기념품", "점심: 마카롱", "오후: 공원", "저녁: 정리"],
+      ],
+    },
+    "Nice": {
+      vi: [
+        ["Sáng: Promenade des Anglais", "Trưa: Socca", "Chiều: Old Nice", "Tối: Beach sunset"],
+        ["Sáng: Castle Hill view", "Trưa: Seafood", "Chiều: Market Cours Saleya", "Tối: Cafe"],
+        ["Sáng: Day trip Monaco / Eze", "Trưa: Ăn trên đường", "Chiều: Về Nice", "Tối: Night stroll"],
+        ["Sáng: Beach swim", "Trưa: Salad Niçoise", "Chiều: Museum / shopping", "Tối: Gelato"],
+        ["Sáng: Mua quà", "Trưa: Ăn cuối", "Chiều: Ảnh cuối", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 영국인 산책로", "점심: 소카", "오후: 올드니스", "저녁: 선셋"],
+        ["오전: 캐슬힐", "점심: 해산물", "오후: 시장", "저녁: 카페"],
+        ["오전: 모나코 / 에즈", "점심: 이동 식사", "오후: 복귀", "저녁: 산책"],
+        ["오전: 해변", "점심: 니수아즈", "오후: 박물관·쇼핑", "저녁: 젤라토"],
+        ["오전: 기념품", "점심: 마지막 식사", "오후: 포토", "저녁: 정리"],
+      ],
+    },
+    "Rome": {
+      vi: [
+        ["Sáng: Colosseum + Roman Forum", "Trưa: Pasta carbonara", "Chiều: Piazza Venezia dạo", "Tối: Trevi Fountain"],
+        ["Sáng: Vatican Museums + St. Peter", "Trưa: Pizza al taglio", "Chiều: Castel Sant’Angelo", "Tối: Trastevere dinner"],
+        ["Sáng: Pantheon + Piazza Navona", "Trưa: Gelato", "Chiều: Spanish Steps shopping", "Tối: Campo de’ Fiori"],
+        ["Sáng: Day trip Tivoli / Pompeii (xa)", "Trưa: Ăn nhẹ", "Chiều: Về Rome nghỉ", "Tối: Wine bar"],
+        ["Sáng: Mua quà", "Trưa: Ăn cuối", "Chiều: Cafe", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 콜로세움", "점심: 카르보나라", "오후: 베네치아 광장", "저녁: 트레비 분수"],
+        ["오전: 바티칸", "점심: 피자", "오후: 산탄젤로성", "저녁: 트라스테베레"],
+        ["오전: 판테온 + 나보나", "점심: 젤라토", "오후: 스페인 계단", "저녁: 캄포데피오리"],
+        ["오전: 티브올리 등", "점심: 간단 식사", "오후: 휴식", "저녁: 와인바"],
+        ["오전: 기념품", "점심: 마지막 식사", "오후: 카페", "저녁: 정리"],
+      ],
+    },
+    "Florence": {
+      vi: [
+        ["Sáng: Duomo + climb (nếu kịp)", "Trưa: Lampredotto / panini", "Chiều: Uffizi ngoài hoặc Ponte Vecchio", "Tối: Sunset Piazzale Michelangelo"],
+        ["Sáng: Accademia (David) hoặc palazzo", "Trưa: Gelato", "Chiều: Oltrarno artisan", "Tối: Tuscan dinner"],
+        ["Sáng: Day trip Pisa / Siena", "Trưa: Ăn địa phương", "Chiều: Về Florence", "Tối: Wine tasting"],
+        ["Sáng: Boboli Gardens", "Trưa: Truffle pasta", "Chiều: Shopping leather", "Tối: Cafe"],
+        ["Sáng: Mua quà", "Trưa: Ăn cuối", "Chiều: Ảnh cuối", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 두오모", "점심: 파니니", "오후: 우피치·베키오다리", "저녁: 미켈란젤로 광장"],
+        ["오전: 아카데미아", "점심: 젤라토", "오후: 올트라르노", "저녁: 토스카나 디너"],
+        ["오전: 피사 / 시에나", "점심: 로컬", "오후: 복귀", "저녁: 와인"],
+        ["오전: 보볼리 정원", "점심: 파스타", "오후: 가죽 쇼핑", "저녁: 카페"],
+        ["오전: 기념품", "점심: 마지막 식사", "오후: 포토", "저녁: 정리"],
+      ],
+    },
+    "Venice": {
+      vi: [
+        ["Sáng: St. Mark’s Square", "Trưa: Cicchetti", "Chiều: Doge’s Palace khu vực", "Tối: Gondola / vaporetto sunset"],
+        ["Sáng: Rialto Market", "Trưa: Seafood pasta", "Chiều: Cannaregio walk", "Tối: Bridge of Sighs photo"],
+        ["Sáng: Murano / Burano day", "Trưa: Ăn đảo", "Chiều: Về Venice", "Tối: Campo night"],
+        ["Sáng: Accademia / Peggy Guggenheim", "Trưa: Gelato", "Chiều: Hidden alleys", "Tối: Spritz hour"],
+        ["Sáng: Mua mask / glass", "Trưa: Ăn cuối", "Chiều: Station", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 산마르코 광장", "점심: 치케티", "오후: 두칼레 궁", "저녁: 곤돌라·바포레토"],
+        ["오전: 리알토 시장", "점심: 해산물 파스타", "오후: 칸나레지오", "저녁: 탄식의 다리"],
+        ["오전: 무라노 / 부라노", "점심: 섬 식사", "오후: 복귀", "저녁: 캄포"],
+        ["오전: 미술관", "점심: 젤라토", "오후: 골목 산책", "저녁: 스프리츠"],
+        ["오전: 기념품", "점심: 마지막 식사", "오후: 이동", "저녁: 정리"],
+      ],
+    },
+    "New York": {
+      vi: [
+        ["Sáng: Central Park", "Trưa: Food cart / deli", "Chiều: Metropolitan / MoMA khu vực", "Tối: Times Square"],
+        ["Sáng: Statue of Liberty / ferry", "Trưa: Pizza NY", "Chiều: Wall Street + 9/11 memorial", "Tối: Brooklyn Bridge walk"],
+        ["Sáng: Brooklyn / DUMBO", "Trưa: Brunch", "Chiều: SoHo shopping", "Tối: Broadway (nếu budget)"],
+        ["Sáng: MET / Natural History", "Trưa: Bagel", "Chiều: Fifth Avenue", "Tối: Rooftop"],
+        ["Sáng: Mua quà", "Trưa: Ăn cuối", "Chiều: High Line", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 센트럴파크", "점심: 델리", "오후: 미술관 일대", "저녁: 타임스스퀘어"],
+        ["오전: 자유의 여신상", "점심: 피자", "오후: 월스트리트", "저녁: 브루클린브리지"],
+        ["오전: 덤보", "점심: 브런치", "오후: 소호", "저녁: 브로드웨이"],
+        ["오전: 박물관", "점심: 베이글", "오후: 5번가", "저녁: 루프탑"],
+        ["오전: 기념품", "점심: 마지막 식사", "오후: 하이라인", "저녁: 정리"],
+      ],
+    },
+    "Los Angeles": {
+      vi: [
+        ["Sáng: Santa Monica Pier", "Trưa: Beach food", "Chiều: Venice Beach", "Tối: Sunset"],
+        ["Sáng: Hollywood Walk + Griffith view", "Trưa: Tacos", "Chiều: Griffith Observatory", "Tối: Downtown LA"],
+        ["Sáng: Getty / museum", "Trưa: Brunch", "Chiều: Beverly Hills drive-by", "Tối: Koreatown"],
+        ["Sáng: Universal Studios (budget cao) hoặc The Grove", "Trưa: Ăn trong khu", "Chiều: Shopping", "Tối: Live music"],
+        ["Sáng: Mua quà", "Trưa: In-N-Out", "Chiều: Beach lần cuối", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 산타모니카", "점심: 비치푸드", "오후: 베니스비치", "저녁: 선셋"],
+        ["오전: 할리우드", "점심: 타코", "오후: 그리피스 전망대", "저녁: 다운타운"],
+        ["오전: 게티 미술관", "점심: 브런치", "오후: 베벌리힐스", "저녁: 코리아타운"],
+        ["오전: 유니버설 or 그로브", "점심: 구역 식사", "오후: 쇼핑", "저녁: 라이브"],
+        ["오전: 기념품", "점심: 인앤아웃", "오후: 해변", "저녁: 정리"],
+      ],
+    },
+    "San Francisco": {
+      vi: [
+        ["Sáng: Golden Gate view", "Trưa: Clam chowder", "Chiều: Fisherman’s Wharf", "Tối: Pier 39"],
+        ["Sáng: Alcatraz (nếu đặt trước) hoặc ferry", "Trưa: Sourdough", "Chiều: Chinatown", "Tối: North Beach"],
+        ["Sáng: Twin Peaks / Painted Ladies", "Trưa: Burrito Mission", "Chiều: Mission murals", "Tối: Cafe"],
+        ["Sáng: Day trip Muir Woods / Napa nhẹ", "Trưa: Picnic", "Chiều: Về SF", "Tối: Night view"],
+        ["Sáng: Mua quà", "Trưa: Ăn cuối", "Chiều: Cable car photo", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 골든게이트", "점심: 클램차우더", "오후: 피셔맨스워프", "저녁: 피어39"],
+        ["오전: 알카트라즈 / 페리", "점심: 사워도우", "오후: 차이나타운", "저녁: 노스비치"],
+        ["오전: 트윈픽스", "점심: 미션 부리또", "오후: 벽화", "저녁: 카페"],
+        ["오전: 뮤어우즈 / 나파", "점심: 피크닉", "오후: 복귀", "저녁: 야경"],
+        ["오전: 기념품", "점심: 마지막 식사", "오후: 케이블카", "저녁: 정리"],
+      ],
+    },
+    "Sydney": {
+      vi: [
+        ["Sáng: Opera House + Harbour Bridge photo", "Trưa: Brunch Circular Quay", "Chiều: Royal Botanic Garden", "Tối: Darling Harbour"],
+        ["Sáng: Bondi Beach + coastal walk", "Trưa: Beach cafe", "Chiều: Bondi to Coogee (đoạn ngắn)", "Tối: Sunset"],
+        ["Sáng: Taronga Zoo ferry hoặc aquarium", "Trưa: Ăn trên đường", "Chiều: The Rocks", "Tối: Night market"],
+        ["Sáng: Day trip Blue Mountains", "Trưa: Picnic", "Chiều: Scenic view", "Tối: Về Sydney"],
+        ["Sáng: Shopping / Quay", "Trưa: Meat pie", "Chiều: Cafe", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 오페라하우스", "점심: 브런치", "오후: 식물원", "저녁: 달링하버"],
+        ["오전: 본다이 비치", "점심: 비치 카페", "오후: 코스탈 워크", "저녁: 선셋"],
+        ["오전: 타롱가 / 아쿠아리움", "점심: 간단 식사", "오후: 더록스", "저녁: 야시장"],
+        ["오전: 블루마운틴", "점심: 피크닉", "오후: 전망", "저녁: 복귀"],
+        ["오전: 쇼핑", "점심: 미트파이", "오후: 카페", "저녁: 정리"],
+      ],
+    },
+    "Melbourne": {
+      vi: [
+        ["Sáng: Federation Square + laneways", "Trưa: Coffee culture brunch", "Chiều: NGV / riverside", "Tối: Chinatown"],
+        ["Sáng: Queen Victoria Market", "Trưa: Food stall", "Chiều: Street art Hosier", "Tối: Rooftop bar"],
+        ["Sáng: St Kilda beach + penguins (chiều tối)", "Trưa: Fish & chips", "Chiều: Brighton boxes", "Tối: Live music"],
+        ["Sáng: Day trip Great Ocean Road (dài) hoặc Yarra Valley", "Trưa: Picnic", "Chiều: Về Melb", "Tối: Dinner"],
+        ["Sáng: Shopping / bookstore", "Trưa: Ăn cuối", "Chiều: Cafe", "Tối: Tổng kết"],
+      ],
+      ko: [
+        ["오전: 페더레이션스퀘어", "점심: 브런치 커피", "오후: NGV", "저녁: 차이나타운"],
+        ["오전: 퀸빅토리아 마켓", "점심: 푸드스톨", "오후: 벽화거리", "저녁: 루프탑"],
+        ["오전: 세인트킬다", "점심: 피시앤칩스", "오후: 브라이턴", "저녁: 라이브"],
+        ["오전: 그레이트오션 / 야라", "점심: 피크닉", "오후: 복귀", "저녁: 디너"],
+        ["오전: 쇼핑", "점심: 마지막 식사", "오후: 카페", "저녁: 정리"],
+      ],
+    },
+  };
+
+  function defaultPlan(cityName, lang) {
+    const n = cityName || "thành phố";
+    if (lang === "ko") {
+      return [
+        [`오전: ${n} 시내 핵심 명소`, "점심: 로컬 맛집", "오후: 박물관 / 공원", "저녁: 야경·야시장"],
+        [`오전: ${n} 전망 명소`, "점심: 길거리 음식", "오후: 카페·쇼핑거리", "저녁: 산책"],
+        ["오전: 근교 당일 투어", "점심: 이동 중 식사", "오후: 자연·해변·언덕", "저녁: 휴식"],
+        ["오전: 문화 체험 / 공방", "점심: 현지 정식", "오후: 자유 일정", "저녁: 라이브·루프탑"],
+        ["오전: 기념품 쇼핑", "점심: 마지막 맛집", "오후: 포토스팟", "저녁: 여행 정리"],
+      ];
+    }
+    return [
+      [`Sáng: Khám phá trung tâm ${n}`, "Trưa: Ăn đặc sản địa phương", "Chiều: Bảo tàng / công viên", "Tối: Chợ đêm / phố đi bộ"],
+      [`Sáng: Điểm check-in nổi bật ${n}`, "Trưa: Ẩm thực đường phố", "Chiều: Cafe + shopping", "Tối: Ngắm hoàng hôn"],
+      ["Sáng: Tour nửa ngày ngoại ô", "Trưa: Ăn trên đường", "Chiều: Thiên nhiên / biển / đồi", "Tối: Nghỉ ngơi"],
+      ["Sáng: Trải nghiệm văn hóa / workshop", "Trưa: Đặc sản lần 2", "Chiều: Lịch thịnh tự do", "Tối: Nhạc sống / rooftop"],
+      ["Sáng: Mua quà lưu niệm", "Trưa: Ăn lần cuối", "Chiều: Chụp ảnh tạm biệt", "Tối: Tổng kết chuyến đi"],
+    ];
+  }
+
+  /** Lấy gợi ý theo thành phố + số ngày + chỉnh nhẹ theo ngân sách/ngày */
+  function buildSuggestedPlan(city, days, budget) {
+    const lang = state.lang === "ko" ? "ko" : "vi";
+    const name = city?.name || "";
+    const pack = PLANS[name];
+    const full = pack ? pack[lang] : defaultPlan(name, lang);
+    const daily = days > 0 ? budget / days : budget;
+    const activities = {};
+
+    for (let d = 1; d <= days; d++) {
+      const base = [...(full[d - 1] || full[full.length - 1])];
+      // Ngân sách thấp: thêm tip tiết kiệm; cao: thêm trải nghiệm “worth it”
+      if (daily > 0 && daily < 500000) {
+        base.push(lang === "ko" ? "팁: 도보·대중교통 위주, 호커/길거리 음식" : "Tip: Đi bộ / xe buýt, ưu tiên ăn đường phố");
+      } else if (daily >= 1500000) {
+        base.push(lang === "ko" ? "팁: 유명 맛집 or 반나절 투어 1개 넣어보기" : "Tip: Thêm 1 nhà hàng nổi tiếng hoặc tour nửa ngày");
+      }
+      activities[d] = base;
+    }
+    return activities;
+  }
+
+  const STR = {
+    vi: {
+      "doc.title": "BEETRIP · My Trip Planner",
+      "lang.aria": "Đổi ngôn ngữ Việt / Hàn",
+      "header.name": "My Trip Planner",
+      "header.slogan": "Theo dấu ong trong sương — lên lịch hành trình huyền bí của riêng bạn.",
+      "hero.hint": "Cuộn xuống để mở bản đồ hành trình",
+      "gal.1": "Sương núi",
+      "gal.2": "Hành trình",
+      "gal.3": "Đêm thành phố",
+      "sec.map": "Bản đồ & khung cảnh điểm đến",
+      "sec.map.hint": "Chọn thành phố rồi bắt đầu kế hoạch — ảnh và bản đồ sẽ mở đúng tọa độ điểm đến.",
+      "map.waiting": "Chọn điểm đến để hé lộ khung cảnh…",
+      "map.empty": "Bản đồ đang chờ tọa độ hành trình của bạn.",
+      "sec.form": "Thông tin chuyến đi",
+      "sec.form.hint": "Chọn điểm đến · số ngày · ngân sách — ong sẽ tự gợi ý lịch trình sẵn, bạn chỉ việc chỉnh lại!",
+      "field.dest": "Điểm đến (Destination)",
+      "field.days": "Số ngày đi",
+      "field.budget": "Ngân sách dự kiến (Budget)",
+      "ph.dest": "Gõ hoặc chọn thành phố...",
+      "ph.budget": "vd: 5000000",
+      "btn.start": "Gợi ý kế hoạch ngay",
+      "sec.trip": "Lịch trình gợi ý",
+      "trip.empty": "Chọn điểm đến rồi nhấn “Gợi ý kế hoạch ngay” — ong sẽ tự lên lịch từng ngày cho bạn!",
+      "suggest.note": "🐝 Ong đã gợi ý sẵn lịch trình — bạn có thể sửa, xóa hoặc thêm hoạt động!",
+      "btn.regen": "Gợi ý lại kế hoạch",
+      "day.label": "Ngày {n}",
+      "day.count": "{n} hoạt động",
+      "btn.add": "+ Thêm hoạt động",
+      "chip.dest": "Đến: {v}",
+      "chip.days": "{n} ngày",
+      "chip.budget": "Ngân sách: {v} ₫",
+      "chip.daily": "~{v} ₫ / ngày",
+      "sec.weather": "Thời tiết & lời khuyên du lịch",
+      "sec.weather.hint": "Phân tích thời tiết điểm đến (Open-Meteo) · gợi ý mang gì / làm gì · kết nối sổ chi tiêu BEESO",
+      "weather.empty": "Chọn điểm đến và bắt đầu kế hoạch để xem thời tiết + lời khuyên du lịch.",
+      "weather.loading": "Đang lấy thời tiết điểm đến...",
+      "weather.error": "Không lấy được thời tiết lúc này. Bạn vẫn có thể lên lịch bình thường!",
+      "weather.feels": "Cảm giác: {v}°C",
+      "weather.humidity": "Độ ẩm: {v}%",
+      "weather.wind": "Gió: {v} km/h",
+      "weather.adviceTitle": "Lời khuyên du lịch từ ong 🐝",
+      "bridge.text": "Theo dõi chi tiêu chuyến đi trong sổ BEESO BUDGET — cùng vũ trụ ong huyền bí.",
+      "bridge.cta": "Mở BEESO BUDGET →",
+      "foot": "BEETRIP · My Trip Planner · Ong dẫn đường trong sương 🐝",
+      "modal.title": "Thêm hoạt động",
+      "modal.label": "Hoạt động",
+      "ph.act": "vd: Tham quan bảo tàng...",
+      "modal.cancel": "Hủy",
+      "modal.save": "Thêm",
+      "adv.hot": "Trời nóng — mang kem chống nắng, mũ rộng vành, uống đủ nước.",
+      "adv.cold": "Trời lạnh — mặc nhiều lớp, mang áo ấm / khăn choàng.",
+      "adv.mild": "Nhiệt độ dễ chịu — lý tưởng để đi bộ khám phá phố cổ!",
+      "adv.rain": "Có mưa — mang ô / áo mưa, ưu tiên hoạt động trong nhà.",
+      "adv.clear": "Trời quang — chụp ảnh ngoài trời và săn hoàng hôn đẹp lắm!",
+      "adv.cloud": "Trời nhiều mây — vẫn đi được, nhớ mang áo khoác mỏng.",
+      "adv.budget.low": "Ngân sách/ngày khá eo hẹp — ưu tiên ăn địa phương & đi bộ nhiều.",
+      "adv.budget.mid": "Ngân sách vừa phải — kết hợp free walking tour + 1 trải nghiệm đặc sắc.",
+      "adv.budget.high": "Ngân sách thoải mái — có thể thử nhà hàng nổi tiếng hoặc tour nửa ngày.",
+      "adv.generic": "Lên lịch 1–2 hoạt động chính/ngày để không bị quá tải nhé!",
+    },
+    ko: {
+      "doc.title": "BEETRIP · 마이 트립 플래너",
+      "lang.aria": "언어 전환 베트남어 / 한국어",
+      "header.name": "My Trip Planner",
+      "header.slogan": "안개 속 꿀벌의 길을 따라 — 당신만의 신비로운 여행을 계획하세요.",
+      "hero.hint": "아래로 내려 여정 지도를 열어보세요",
+      "gal.1": "산안개",
+      "gal.2": "여정",
+      "gal.3": "도시의 밤",
+      "sec.map": "지도 & 목적지 풍경",
+      "sec.map.hint": "도시를 고르고 계획을 시작하면 사진과 지도가 좌표에 맞춰 열립니다.",
+      "map.waiting": "목적지를 고르면 풍경이 드러납니다…",
+      "map.empty": "지도가 당신의 여정 좌표를 기다리는 중.",
+      "sec.form": "여행 정보",
+      "sec.form.hint": "목적지 · 일수 · 예산만 넣으면 꿀벌이 일정을 먼저 짜 드려요. 원하는 대로 수정하세요!",
+      "field.dest": "목적지 (Destination)",
+      "field.days": "여행 일수",
+      "field.budget": "예상 예산 (Budget)",
+      "ph.dest": "도시를 입력하거나 선택하세요...",
+      "ph.budget": "예: 5000000",
+      "btn.start": "일정 추천받기",
+      "sec.trip": "추천 일정",
+      "trip.empty": "목적지를 고른 뒤 “일정 추천받기”를 누르면 일자별로 계획이 채워져요!",
+      "suggest.note": "🐝 꿀벌이 일정을 먼저 짜 뒀어요 — 수정·삭제·추가해도 됩니다!",
+      "btn.regen": "일정 다시 추천",
+      "day.label": "{n}일차",
+      "day.count": "활동 {n}개",
+      "btn.add": "+ 활동 추가",
+      "chip.dest": "목적지: {v}",
+      "chip.days": "{n}일",
+      "chip.budget": "예산: {v} ₫",
+      "chip.daily": "하루 ~{v} ₫",
+      "sec.weather": "날씨 & 여행 조언",
+      "sec.weather.hint": "목적지 날씨 분석(Open-Meteo) · 준비물/활동 팁 · BEESO 가계부 연동",
+      "weather.empty": "목적지를 고르고 계획을 시작하면 날씨 + 여행 조언을 볼 수 있어요.",
+      "weather.loading": "목적지 날씨를 불러오는 중...",
+      "weather.error": "지금은 날씨를 가져올 수 없어요. 일정은 그대로 만들 수 있습니다!",
+      "weather.feels": "체감: {v}°C",
+      "weather.humidity": "습도: {v}%",
+      "weather.wind": "바람: {v} km/h",
+      "weather.adviceTitle": "꿀벌의 여행 조언 🐝",
+      "bridge.text": "여행 지출은 BEESO BUDGET에서 관리하세요 — 신비로운 꿀벌 세계와 함께.",
+      "bridge.cta": "BEESO BUDGET 열기 →",
+      "foot": "BEETRIP · My Trip Planner · 안개 속 꿀벌이 길을 안내해요 🐝",
+      "modal.title": "활동 추가",
+      "modal.label": "활동",
+      "ph.act": "예: 박물관 관람...",
+      "modal.cancel": "취소",
+      "modal.save": "추가",
+      "adv.hot": "더워요 — 선크림, 모자, 물을 챙기세요.",
+      "adv.cold": "추워요 — 겹쳐 입고 아우터/목도리를 챙기세요.",
+      "adv.mild": "쾌적한 기온 — 시내 산책하기 딱 좋아요!",
+      "adv.rain": "비가 와요 — 우산/우비를 챙기고 실내 활동을 우선하세요.",
+      "adv.clear": "맑아요 — 야외 사진과 노을 명소에 도전!",
+      "adv.cloud": "구름이 많아요 — 얇은 겉옷을 챙기면 좋아요.",
+      "adv.budget.low": "하루 예산이 빠듯해요 — 로컬 식당과 도보 위주로!",
+      "adv.budget.mid": "적당한 예산 — 무료 워킹투어 + 특별 체험 1개를 조합해 보세요.",
+      "adv.budget.high": "여유로운 예산 — 유명 맛집이나 반나절 투어도 좋아요.",
+      "adv.generic": "하루 핵심 활동 1–2개면 충분해요. 무리하지 마세요!",
+    },
+  };
+
+  const WMO = {
+    0: { icon: "☀️", vi: "Trời quang", ko: "맑음" },
+    1: { icon: "🌤️", vi: "Ít mây", ko: "대체로 맑음" },
+    2: { icon: "⛅", vi: "Có mây", ko: "구름 많음" },
+    3: { icon: "☁️", vi: "Nhiều mây", ko: "흐림" },
+    45: { icon: "🌫️", vi: "Sương mù", ko: "안개" },
+    48: { icon: "🌫️", vi: "Sương mù đông", ko: "착빙 안개" },
+    51: { icon: "🌦️", vi: "Mưa phùn nhẹ", ko: "이슬비" },
+    53: { icon: "🌦️", vi: "Mưa phùn", ko: "이슬비" },
+    55: { icon: "🌧️", vi: "Mưa phùn dày", ko: "강한 이슬비" },
+    61: { icon: "🌧️", vi: "Mưa nhẹ", ko: "약한 비" },
+    63: { icon: "🌧️", vi: "Mưa", ko: "비" },
+    65: { icon: "⛈️", vi: "Mưa to", ko: "강한 비" },
+    71: { icon: "🌨️", vi: "Tuyết nhẹ", ko: "약한 눈" },
+    73: { icon: "🌨️", vi: "Tuyết", ko: "눈" },
+    75: { icon: "❄️", vi: "Tuyết dày", ko: "강한 눈" },
+    80: { icon: "🌦️", vi: "Mưa rào", ko: "소나기" },
+    81: { icon: "🌧️", vi: "Mưa rào vừa", ko: "소나기" },
+    82: { icon: "⛈️", vi: "Mưa rào mạnh", ko: "강한 소나기" },
+    95: { icon: "⛈️", vi: "Dông", ko: "뇌우" },
+    96: { icon: "⛈️", vi: "Dông kèm mưa đá", ko: "우박 뇌우" },
+    99: { icon: "⛈️", vi: "Dông mạnh", ko: "강한 뇌우" },
+  };
+
+  const state = {
+    lang: localStorage.getItem(LANG_KEY) || "vi",
+    selectedCity: null,
+    days: 0,
+    budget: 0,
+    destination: "",
+    activities: {}, // { 1: ["..."], 2: [...] }
+    addingDay: null,
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    form: $("tripForm"),
+    destination: $("destination"),
+    cityMenu: $("cityMenu"),
+    days: $("days"),
+    budget: $("budget"),
+    tripContainer: $("tripContainer"),
+    tripSummary: $("tripSummary"),
+    weatherGrid: $("weatherGrid"),
+    actModal: $("actModal"),
+    actInput: $("actInput"),
+    actCancel: $("actCancel"),
+    actSave: $("actSave"),
+    destPhoto: $("destPhoto"),
+    destCaption: $("destCaption"),
+    heroMedia: $("heroMedia"),
+    bgPhoto: $("bgPhoto"),
+    mapPlaceholder: $("mapPlaceholder"),
+  };
+
+  let map = null;
+  let mapMarker = null;
+
+  function cityImage(city) {
+    if (!city || !city.name) return DEFAULT_IMG;
+    return CITY_IMAGES[city.name] || DEFAULT_IMG;
+  }
+
+  function updateDestinationVisuals(city) {
+    if (!city) return;
+    const img = cityImage(city);
+    if (els.destPhoto) {
+      els.destPhoto.src = img;
+      els.destPhoto.alt = city.name;
+    }
+    if (els.heroMedia) els.heroMedia.style.backgroundImage = `url("${img}")`;
+    if (els.bgPhoto) els.bgPhoto.style.backgroundImage = `url("${img}")`;
+    if (els.destCaption) {
+      els.destCaption.textContent = `${city.flag} ${city.name} · ${countryLabel(city)}`;
+    }
+    updateMap(city);
+  }
+
+  function initMap() {
+    if (map || typeof L === "undefined") return;
+    map = L.map("tripMap", {
+      zoomControl: true,
+      attributionControl: true,
+      scrollWheelZoom: false,
+    }).setView([20.5, 105.8], 3);
+
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: "abcd",
+      maxZoom: 19,
+    }).addTo(map);
+
+    setTimeout(() => map.invalidateSize(), 120);
+  }
+
+  function updateMap(city) {
+    initMap();
+    if (!map || !city || city.lat == null || city.lon == null) return;
+
+    if (els.mapPlaceholder) els.mapPlaceholder.classList.add("hide");
+
+    const latlng = [city.lat, city.lon];
+    const icon = L.divIcon({
+      className: "",
+      html: '<div class="myst-marker"></div>',
+      iconSize: [16, 16],
+      iconAnchor: [8, 8],
+    });
+
+    if (mapMarker) {
+      mapMarker.setLatLng(latlng);
+      mapMarker.setIcon(icon);
+      mapMarker.setPopupContent(`<strong>${city.flag} ${city.name}</strong>`);
+    } else {
+      mapMarker = L.marker(latlng, { icon })
+        .addTo(map)
+        .bindPopup(`<strong>${city.flag} ${city.name}</strong>`);
+    }
+
+    map.flyTo(latlng, 11, { duration: 1.2 });
+    setTimeout(() => map.invalidateSize(), 200);
+  }
+
+  function t(key, vars = {}) {
+    let s = (STR[state.lang] && STR[state.lang][key]) || STR.vi[key] || key;
+    Object.entries(vars).forEach(([k, v]) => {
+      s = s.replace(new RegExp(`\\{${k}\\}`, "g"), v);
+    });
+    return s;
+  }
+
+  function formatMoney(n) {
+    return Number(n || 0).toLocaleString(state.lang === "ko" ? "ko-KR" : "vi-VN");
+  }
+
+  function countryLabel(city) {
+    return state.lang === "ko" ? city.countryKo : city.country;
+  }
+
+  function applyI18n() {
+    document.documentElement.lang = state.lang;
+    document.title = t("doc.title");
+
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+      el.textContent = t(el.getAttribute("data-i18n"));
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+      el.placeholder = t(el.getAttribute("data-i18n-placeholder"));
+    });
+    document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
+      el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria")));
+    });
+    document.querySelectorAll(".lang-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.lang === state.lang);
+    });
+
+    if (state.selectedCity) updateDestinationVisuals(state.selectedCity);
+    if (state.days > 0) {
+      // Đổi ngôn ngữ → làm mới gợi ý theo VI/KO
+      applySuggestedPlan();
+      if (state.selectedCity) fetchWeather(state.selectedCity);
+    }
+  }
+
+  function setLang(lang) {
+    state.lang = lang === "ko" ? "ko" : "vi";
+    localStorage.setItem(LANG_KEY, state.lang);
+    applyI18n();
+  }
+
+  /* —— City picker —— */
+  function filteredCities(q) {
+    const query = (q || "").trim().toLowerCase();
+    const list = [...CITIES].sort((a, b) => {
+      const ca = countryLabel(a).localeCompare(countryLabel(b), state.lang === "ko" ? "ko" : "vi");
+      if (ca !== 0) return ca;
+      return a.name.localeCompare(b.name, "en");
+    });
+    if (!query) return list;
+    return list.filter((c) => {
+      const hay = `${c.name} ${c.country} ${c.countryKo}`.toLowerCase();
+      return hay.includes(query);
+    });
+  }
+
+  function renderCityMenu(q) {
+    const cities = filteredCities(q);
+    if (!cities.length) {
+      els.cityMenu.innerHTML = `<div class="city-group-label">—</div>`;
+      els.cityMenu.classList.add("open");
+      return;
+    }
+
+    let html = "";
+    let lastCountry = "";
+    cities.forEach((c) => {
+      const country = `${c.flag} ${countryLabel(c)}`;
+      if (country !== lastCountry) {
+        lastCountry = country;
+        html += `<div class="city-group-label">${country}</div>`;
+      }
+      html += `
+        <button type="button" class="city-option" role="option"
+          data-name="${c.name}" data-lat="${c.lat}" data-lon="${c.lon}"
+          data-country="${c.country}" data-flag="${c.flag}">
+          <span class="flag">${c.flag}</span>
+          <span>${c.name}</span>
+          <span class="meta">${c.name.charAt(0).toUpperCase()}</span>
+        </button>`;
+    });
+    els.cityMenu.innerHTML = html;
+    els.cityMenu.classList.add("open");
+  }
+
+  function pickCity(city) {
+    state.selectedCity = city;
+    els.destination.value = `${city.flag} ${city.name}`;
+    els.cityMenu.classList.remove("open");
+    updateDestinationVisuals(city);
+  }
+
+  function resolveCityFromInput() {
+    const raw = els.destination.value.trim();
+    if (state.selectedCity && `${state.selectedCity.flag} ${state.selectedCity.name}` === raw) {
+      return state.selectedCity;
+    }
+    const name = raw.replace(/^[\u{1F1E6}-\u{1F1FF}]{2}\s*/u, "").trim();
+    const found = CITIES.find(
+      (c) => c.name.toLowerCase() === name.toLowerCase() ||
+             `${c.flag} ${c.name}`.toLowerCase() === raw.toLowerCase()
+    );
+    if (found) {
+      state.selectedCity = found;
+      return found;
+    }
+    return {
+      name: name || raw,
+      country: "—",
+      countryKo: "—",
+      flag: "🌍",
+      lat: null,
+      lon: null,
+    };
+  }
+
+  /* —— Trip plan —— */
+  function applySuggestedPlan() {
+    const city = state.selectedCity || resolveCityFromInput();
+    state.activities = buildSuggestedPlan(city, state.days, state.budget);
+    savePlan();
+    renderTrip();
+  }
+
+  function startPlan(e) {
+    e.preventDefault();
+    const city = resolveCityFromInput();
+    const days = Number(els.days.value);
+    const budget = Number(els.budget.value);
+
+    state.selectedCity = city;
+    state.destination = `${city.flag} ${city.name}`;
+    state.days = days;
+    state.budget = budget;
+    updateDestinationVisuals(city);
+    applySuggestedPlan();
+    fetchWeather(city);
+  }
+
+  function renderTrip() {
+    const { days, budget, destination, activities } = state;
+    if (!days) return;
+
+    const daily = Math.round(budget / days);
+    const suggestBar = $("suggestBar");
+    if (suggestBar) suggestBar.classList.add("show");
+
+    els.tripSummary.classList.add("show");
+    els.tripSummary.innerHTML = `
+      <span class="chip">${t("chip.dest", { v: destination })}</span>
+      <span class="chip yellow">${t("chip.days", { n: days })}</span>
+      <span class="chip green">${t("chip.budget", { v: formatMoney(budget) })}</span>
+      <span class="chip">${t("chip.daily", { v: formatMoney(daily) })}</span>
+    `;
+
+    els.tripContainer.innerHTML = "";
+    for (let d = 1; d <= days; d++) {
+      const acts = activities[d] || [];
+      const col = document.createElement("div");
+      col.className = "day-col";
+      col.innerHTML = `
+        <div class="day-head">
+          <h3 class="day-title">${t("day.label", { n: d })}</h3>
+          <span class="day-count">${t("day.count", { n: acts.length })}</span>
+        </div>
+        <ul class="activity-list" data-day="${d}"></ul>
+        <button type="button" class="add-act-btn" data-day="${d}">${t("btn.add")}</button>
+      `;
+      const list = col.querySelector(".activity-list");
+      acts.forEach((text, idx) => {
+        const li = document.createElement("li");
+        li.className = "activity-item suggested";
+        li.innerHTML = `
+          <span class="bee-dot" aria-hidden="true">🐝</span>
+          <span class="act-text"></span>
+          <button type="button" class="act-del" data-day="${d}" data-idx="${idx}" aria-label="delete">×</button>
+        `;
+        li.querySelector(".act-text").textContent = text;
+        list.appendChild(li);
+      });
+      els.tripContainer.appendChild(col);
+    }
+  }
+
+  function openModal(day) {
+    state.addingDay = day;
+    els.actInput.value = "";
+    els.actModal.classList.add("open");
+    setTimeout(() => els.actInput.focus(), 50);
+  }
+
+  function closeModal() {
+    state.addingDay = null;
+    els.actModal.classList.remove("open");
+  }
+
+  function saveActivity() {
+    const text = els.actInput.value.trim();
+    const day = state.addingDay;
+    if (!text || !day) return;
+    if (!state.activities[day]) state.activities[day] = [];
+    state.activities[day].push(text);
+    savePlan();
+    closeModal();
+    renderTrip();
+  }
+
+  function deleteActivity(day, idx) {
+    state.activities[day].splice(idx, 1);
+    savePlan();
+    renderTrip();
+  }
+
+  function savePlan() {
+    localStorage.setItem(PLAN_KEY, JSON.stringify({
+      destination: state.destination,
+      days: state.days,
+      budget: state.budget,
+      activities: state.activities,
+      city: state.selectedCity,
+    }));
+  }
+
+  function loadPlan() {
+    try {
+      const raw = localStorage.getItem(PLAN_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (!data.days) return;
+      state.destination = data.destination || "";
+      state.days = data.days;
+      state.budget = data.budget || 0;
+      state.activities = data.activities || {};
+      state.selectedCity = data.city || null;
+      els.destination.value = state.destination;
+      els.days.value = String(state.days);
+      els.budget.value = String(state.budget);
+      renderTrip();
+      if (state.selectedCity) fetchWeather(state.selectedCity);
+    } catch (_) { /* ignore */ }
+  }
+
+  /* —— Weather + travel advice —— */
+  function weatherLabel(code) {
+    const w = WMO[code] || { icon: "🌡️", vi: "Thời tiết", ko: "날씨" };
+    return { icon: w.icon, text: state.lang === "ko" ? w.ko : w.vi };
+  }
+
+  function buildAdvice(current, dailyBudget) {
+    const tips = [];
+    const temp = current.temperature;
+    const code = current.weathercode;
+
+    if (temp >= 30) tips.push(t("adv.hot"));
+    else if (temp <= 10) tips.push(t("adv.cold"));
+    else tips.push(t("adv.mild"));
+
+    if ([51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99].includes(code)) {
+      tips.push(t("adv.rain"));
+    } else if (code === 0 || code === 1) {
+      tips.push(t("adv.clear"));
+    } else {
+      tips.push(t("adv.cloud"));
+    }
+
+    if (dailyBudget < 500000) tips.push(t("adv.budget.low"));
+    else if (dailyBudget < 1500000) tips.push(t("adv.budget.mid"));
+    else tips.push(t("adv.budget.high"));
+
+    tips.push(t("adv.generic"));
+    return tips;
+  }
+
+  async function fetchWeather(city) {
+    if (!city || city.lat == null || city.lon == null) {
+      els.weatherGrid.innerHTML = `<p class="weather-placeholder">${t("weather.error")}</p>`;
+      return;
+    }
+
+    els.weatherGrid.innerHTML = `<p class="weather-placeholder weather-loading">${t("weather.loading")}</p>`;
+
+    const url =
+      `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}` +
+      `&current_weather=true&hourly=relativehumidity_2m&timezone=auto`;
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("bad status");
+      const data = await res.json();
+      const cw = data.current_weather;
+      const humidity = data.hourly?.relativehumidity_2m?.[0];
+      const label = weatherLabel(cw.weathercode);
+      const dailyBudget = state.days ? Math.round(state.budget / state.days) : 0;
+      const tips = buildAdvice(cw, dailyBudget);
+
+      els.weatherGrid.innerHTML = `
+        <div class="weather-card">
+          <div class="weather-main">
+            <div class="weather-icon">${label.icon}</div>
+            <div>
+              <div class="weather-temp">${Math.round(cw.temperature)}°C</div>
+              <div class="weather-place">${city.flag} ${city.name}</div>
+              <div class="weather-desc">${label.text}</div>
+            </div>
+          </div>
+          <div class="weather-meta">
+            <span>${t("weather.feels", { v: Math.round(cw.temperature) })}</span>
+            <span>${t("weather.humidity", { v: humidity ?? "—" })}</span>
+            <span>${t("weather.wind", { v: Math.round(cw.windspeed) })}</span>
+          </div>
+        </div>
+        <div class="advice-box">
+          <h3>${t("weather.adviceTitle")}</h3>
+          <ul>${tips.map((tip) => `<li>${tip}</li>`).join("")}</ul>
+        </div>
+      `;
+    } catch (_) {
+      els.weatherGrid.innerHTML = `<p class="weather-placeholder">${t("weather.error")}</p>`;
+    }
+  }
+
+  /* —— Events —— */
+  document.querySelectorAll(".lang-btn").forEach((btn) => {
+    btn.addEventListener("click", () => setLang(btn.dataset.lang));
+  });
+
+  els.destination.addEventListener("focus", () => renderCityMenu(els.destination.value));
+  els.destination.addEventListener("input", () => {
+    state.selectedCity = null;
+    renderCityMenu(els.destination.value);
+  });
+
+  els.cityMenu.addEventListener("click", (e) => {
+    const btn = e.target.closest(".city-option");
+    if (!btn) return;
+    pickCity({
+      name: btn.dataset.name,
+      country: btn.dataset.country,
+      countryKo: CITIES.find((c) => c.name === btn.dataset.name)?.countryKo || btn.dataset.country,
+      flag: btn.dataset.flag,
+      lat: Number(btn.dataset.lat),
+      lon: Number(btn.dataset.lon),
+    });
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".city-picker")) els.cityMenu.classList.remove("open");
+  });
+
+  els.form.addEventListener("submit", startPlan);
+
+  const regenBtn = $("regenerateBtn");
+  if (regenBtn) {
+    regenBtn.addEventListener("click", () => {
+      if (!state.days) {
+        els.form.requestSubmit();
+        return;
+      }
+      applySuggestedPlan();
+      if (state.selectedCity) fetchWeather(state.selectedCity);
+    });
+  }
+
+  els.tripContainer.addEventListener("click", (e) => {
+    const addBtn = e.target.closest(".add-act-btn");
+    if (addBtn) {
+      openModal(Number(addBtn.dataset.day));
+      return;
+    }
+    const del = e.target.closest(".act-del");
+    if (del) {
+      deleteActivity(Number(del.dataset.day), Number(del.dataset.idx));
+    }
+  });
+
+  els.actCancel.addEventListener("click", closeModal);
+  els.actSave.addEventListener("click", saveActivity);
+  els.actInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      saveActivity();
+    }
+    if (e.key === "Escape") closeModal();
+  });
+  els.actModal.addEventListener("click", (e) => {
+    if (e.target === els.actModal) closeModal();
+  });
+
+  applyI18n();
+  initMap();
+  loadPlan();
+  if (state.selectedCity) updateDestinationVisuals(state.selectedCity);
+})();
+  </script>
+</body>
+</html>
