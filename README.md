@@ -1,6 +1,18 @@
 # BEESO · Hệ ong vàng
 
-## Cách chạy
+## URL online (GitHub Pages)
+
+Sau khi bật Pages (Settings → Pages → Source: **GitHub Actions**), mở:
+
+| Trang | URL |
+|------|-----|
+| BEESO BUDGET | https://phuongdong232007-bot.github.io/yuyuyukikiki/ |
+| BEETRIP | https://phuongdong232007-bot.github.io/yuyuyukikiki/beetrip.html |
+| Matcha Flashcards | https://phuongdong232007-bot.github.io/yuyuyukikiki/korean-flashcards.html |
+
+Repo: https://github.com/phuongdong232007-bot/yuyuyukikiki
+
+## Cách chạy offline
 
 Mở file trong trình duyệt (Chrome / Edge / Firefox):
 
