@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cờ Tỷ Phú — Monopoly World</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Noto+Sans+KR:wght@400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="monopoly.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">◆</span>
+        <h1 data-i18n="brand">Cờ Tỷ Phú</h1>
+      </div>
+      <div class="topbar-actions">
+        <button type="button" id="btnLang" class="btn btn-ghost" aria-label="Toggle language">
+          <span id="langLabel">한국어</span>
+        </button>
+        <button type="button" id="btnNewGame" class="btn btn-accent" data-i18n="newGame">Ván mới</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="board-wrap" aria-label="Game board">
+        <div id="board" class="board"></div>
+        <div class="dice-stage">
+          <div class="dice" id="die1" aria-hidden="true">?</div>
+          <div class="dice" id="die2" aria-hidden="true">?</div>
+        </div>
+      </section>
+
+      <aside class="sidebar">
+        <div class="panel turn-panel">
+          <p class="panel-label" data-i18n="currentTurn">Lượt chơi</p>
+          <div id="turnDisplay" class="turn-display"></div>
+        </div>
+
+        <div class="panel players-panel">
+          <p class="panel-label" data-i18n="players">Người chơi</p>
+          <div id="playersList" class="players-list"></div>
+        </div>
+
+        <div class="panel actions-panel">
+          <p class="panel-label" data-i18n="actions">Hành động</p>
+          <div class="action-btns">
+            <button type="button" id="btnRoll" class="btn btn-primary" data-i18n="roll">Gieo xúc xắc</button>
+            <button type="button" id="btnBuy" class="btn btn-accent" disabled data-i18n="buy">Mua đất</button>
+            <button type="button" id="btnBuild" class="btn btn-soft" disabled data-i18n="build">Xây nhà</button>
+            <button type="button" id="btnEnd" class="btn btn-ghost" disabled data-i18n="endTurn">Kết thúc lượt</button>
+          </div>
+          <div id="jailPrompt" class="jail-prompt hidden">
+            <p data-i18n="jailAsk">Bạn đang ở tù. Trả $150 để ra ngay?</p>
+            <div class="action-btns">
+              <button type="button" id="btnBail" class="btn btn-accent" data-i18n="payBail">Trả $150</button>
+              <button type="button" id="btnStayJail" class="btn btn-ghost" data-i18n="stayJail">Ở lại tù</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel assets-panel">
+          <p class="panel-label" data-i18n="assets">Tài sản người chơi hiện tại</p>
+          <ul id="assetsList" class="assets-list"></ul>
+        </div>
+
+        <div class="panel log-panel">
+          <p class="panel-label" data-i18n="gameLog">Nhật ký sự kiện</p>
+          <div id="gameLog" class="game-log" role="log" aria-live="polite"></div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <h2 id="modalTitle"></h2>
+      <p id="modalBody"></p>
+      <button type="button" id="modalOk" class="btn btn-primary">OK</button>
+    </div>
+  </div>
+
+  <script src="monopoly.js"></script>
+</body>
+</html>
